@@ -1,0 +1,8 @@
+Tienes que instalar composer y hacer composer require en la carpeta raiz del proyecto con estos enlaces
+composer install
+composer require google/apiclient
+composer require paypal/rest-api-sdk-php
+composer require google/apiclient:^2.19
+
+ADEMAS si se me olvida preguntame por los archivos .htaccess que no se por que 
+github no me deja subirlos
