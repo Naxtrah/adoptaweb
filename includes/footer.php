@@ -2,63 +2,227 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!--Scripts específicos-->
     <?php if (isset($scripts_adicionales)) echo $scripts_adicionales; ?>
+    
     <!--Footer contenido-->
     <footer class="bg-success text-white py-5 mt-5">
-    <div class="container">
-        <div class="row text-center">
-            <!--Columna 1 Newsletter-->
-            <div class="col-md-4 mb-4">
-                <h5 class="mb-3">Newsletter</h5>
-                <p class="text-white-50 small mb-3">
-                    Suscríbete a nuestras noticias
+        <div class="container">
+            <div class="row">
+                <!--Columna 1 Newsletter-->
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-3">Newsletter</h5>
+                    <p class="text-white-50 small mb-3">
+                        Suscríbete a nuestras noticias y recibe novedades sobre adopciones
+                    </p>
+                    <form id="newsletter-form">
+                        <div class="input-group mb-3">
+                            <input type="email" class="form-control" id="newsletter-email" placeholder="Tu email" required>
+                            <button class="btn btn-light" type="submit">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        <div id="newsletter-message" class="small"></div>
+                    </form>
+                    <div class="mt-3">
+                        <p class="text-white-50 small mb-0">
+                            <i class="fas fa-shield-alt me-1"></i>
+                            Respetamos tu privacidad. Sin spam.
+                        </p>
+                    </div>
+                </div>
+                <!--Columna 2 Contacto-->
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-3">Contacto</h5>
+                    <div class="mb-3">
+                        <p class="text-white-50 mb-2">
+                            <i class="fas fa-envelope me-2"></i>
+                            <a href="mailto:info@adoptaweb.com" class="text-white-50">info@adoptaweb.com</a>
+                        </p>
+                        <p class="text-white-50 mb-2">
+                            <i class="fas fa-phone me-2"></i>
+                            <a href="tel:+34900123456" class="text-white-50">+34 900 123 456</a>
+                        </p>
+                        <p class="text-white-50 mb-2">
+                            <i class="fas fa-map-marker-alt me-2"></i>Madrid, España
+                        </p>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <a href="<?= BASE_URL ?>/contacto.php" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-envelope me-1"></i>Formulario de contacto
+                        </a>
+                    </div>
+                </div>
+                <!--Columna 3 Legal-->
+                <div class="col-md-4">
+                    <h5 class="mb-3">Legal</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <a href="<?= BASE_URL ?>/terminos.php" class="text-white-50">
+                                <i class="fas fa-file-contract me-1"></i>Términos y condiciones
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="<?= BASE_URL ?>/privacidad.php" class="text-white-50">
+                                <i class="fas fa-user-shield me-1"></i>Política de privacidad
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="<?= BASE_URL ?>/contacto.php" class="text-white-50">
+                                <i class="fas fa-headset me-1"></i>Contacto y soporte
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                        <a href="<?= BASE_URL ?>/includes/faq.php" class="text-white-50">
+                            <i class="fas fa-question-circle me-1"></i>Preguntas frecuentes
+                        </a>
+                    </li>
+                    </ul>
+                    <div class="mt-4">
+                        <h6 class="mb-2">Síguenos</h6>
+                        <div class="d-flex gap-3">
+                            <a href="#" class="text-white fs-5" title="Instagram">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                            <a href="#" class="text-white fs-5" title="Twitter">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            <a href="#" class="text-white fs-5" title="YouTube">
+                                <i class="fab fa-youtube"></i>
+                            </a>
+                            <a href="#" class="text-white fs-5" title="Facebook">
+                                <i class="fab fa-facebook"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center pt-4 mt-4 border-top border-white-50">
+                <a class="navbar-brand mb-2" href="<?= BASE_URL ?>/">
+                    <i class="fas fa-paw me-2"></i>AdoptaWeb
+                </a>
+                <p class="text-white-50 mb-0 small">
+                    Plataforma de adopción animal - Conectando corazones desde 2023
                 </p>
-                <div class="input-group mb-3 mx-auto" style="max-width: 300px;">
-                    <input type="email" class="form-control" placeholder="Tu email">
-                    <button class="btn btn-light" type="button">
-                        <i class="fas fa-paper-plane"></i>
+                <p class="text-white-50 small mb-0 mt-2">
+                    &copy; 2025 AdoptaWeb. Todos los derechos reservados.
+                </p>
+            </div>
+        </div>
+    </footer>
+    
+    <?php if (isset($_SESSION['show_cookie_banner'])): ?>
+    <div class="cookie-banner fixed-bottom bg-dark text-white p-3" id="cookieBanner">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <p class="mb-0">
+                        <i class="fas fa-cookie-bite me-2"></i>
+                        Utilizamos cookies propias y de terceros para mejorar tu experiencia. 
+                        <a href="<?= BASE_URL ?>/privacidad.php" class="text-warning">Política de cookies</a>
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                    <button class="btn btn-success btn-sm me-2" onclick="acceptCookies()">
+                        <i class="fas fa-check me-1"></i>Aceptar todas
+                    </button>
+                    <button class="btn btn-outline-light btn-sm" onclick="rejectCookies()">
+                        <i class="fas fa-times me-1"></i>Rechazar
                     </button>
                 </div>
             </div>
-            <!--Columna 2 Contacto-->
-            <div class="col-md-4 mb-4">
-                <h5 class="mb-3">Contacto</h5>
-                <p class="text-white-50 mb-1">
-                    <i class="fas fa-envelope me-2"></i>info@adoptaweb.com
-                </p>
-                <p class="text-white-50 mb-1">
-                    <i class="fas fa-phone me-2"></i>+34 900 123 456
-                </p>
-                <p class="text-white-50">
-                    <i class="fas fa-map-marker-alt me-2"></i>Madrid, España
-                </p>
-            </div>
-            <!--Columna 3 Legal-->
-            <div class="col-md-4 mb-4">
-                <h5 class="mb-3">Legal</h5>
-                <ul class="list-unstyled">
-                    <li class="mb-2"><a href="<?= BASE_URL ?>/terminos" class="text-white-50">Términos</a></li>
-                    <li class="mb-2"><a href="<?= BASE_URL ?>/privacidad" class="text-white-50">Privacidad</a></li>
-                    <li><a href="<?= BASE_URL ?>/contacto" class="text-white-50">Contacto</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="align-items-center text-center" >
-                    <a class="navbar-brand mb-3" href="<?= BASE_URL ?>/">
-                        <i class="fas fa-paw me-2"></i>AdoptaWeb
-                    </a>
-                    <div class="d-flex justify-content-center gap-4 mt-3">
-                        <a href="#" class="text-white fs-5"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="text-white fs-5"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="text-white fs-5"><i class="fab fa-youtube"></i></a>
-                    </div>
-                </div>
-        <!--Apartado de copyright-->
-        <div class="text-center pt-4 border-white-50">
-            <p class="text-white-50 mb-0">
-                &copy; 2025 AdoptaWeb. Todos los derechos reservados.
-            </p>
         </div>
     </div>
-</footer>
+    <?php endif; ?>
+    
+    <script>
+    function acceptCookies() {
+        fetch('<?= BASE_URL ?>/includes/cookies.php?action=accept')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const banner = document.getElementById('cookieBanner');
+                    if (banner) {
+                        banner.style.transition = 'opacity 0.5s ease';
+                        banner.style.opacity = '0';
+                        setTimeout(() => banner.remove(), 500);
+                    }
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function rejectCookies() {
+        fetch('<?= BASE_URL ?>/includes/cookies.php?action=reject')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const banner = document.getElementById('cookieBanner');
+                    if (banner) {
+                        banner.style.transition = 'opacity 0.5s ease';
+                        banner.style.opacity = '0';
+                        setTimeout(() => banner.remove(), 500);
+                    }
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const newsletterForm = document.getElementById('newsletter-form');
+        if (newsletterForm) {
+            newsletterForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const email = document.getElementById('newsletter-email').value;
+                const messageDiv = document.getElementById('newsletter-message');
+                
+                if (!validateEmail(email)) {
+                    showMessage(messageDiv, 'Email no válido', 'warning');
+                    return;
+                }
+                
+                showMessage(messageDiv, 'Procesando...', 'light');
+                
+                fetch('<?= BASE_URL ?>/includes/newsletter.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'email=' + encodeURIComponent(email)
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Error en la red');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        showMessage(messageDiv, '¡Gracias por suscribirte!', 'light');
+                        document.getElementById('newsletter-email').value = '';
+                        setTimeout(() => messageDiv.innerHTML = '', 3000);
+                    } else {
+                        showMessage(messageDiv, data.message, 'warning');
+                    }
+                })
+                .catch(error => {
+                    showMessage(messageDiv, 'Error de conexión', 'warning');
+                });
+            });
+        }
+    });
+
+    function validateEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    }
+
+    function showMessage(element, text, type) {
+        if (!element) return;
+        const colors = {
+            'warning': 'text-warning',
+            'light': 'text-light',
+            'danger': 'text-danger'
+        };
+        element.innerHTML = `<span class="${colors[type] || 'text-light'}">${text}</span>`;
+    }
+    </script>
 </body>
 </html>

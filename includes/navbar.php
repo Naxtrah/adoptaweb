@@ -14,81 +14,57 @@ $pagina_actual = basename($script_name, '.php');
         </button>
         <div class="collapse navbar-collapse" id="navbarPrincipal">
             <ul class="navbar-nav me-auto">
-                <!--Inicio-->
                 <li class="nav-item">
-                    <a class="nav-link <?= ($pagina_actual == 'index') ? 'active' : '' ?>" 
-                       href="<?= BASE_URL ?>/index.php">
+                    <a class="nav-link <?= ($pagina_actual == 'index') ? 'active' : '' ?>" href="<?= BASE_URL ?>/index.php">
                         <i class="fas fa-home me-1"></i>Inicio
                     </a>
                 </li>
-                <!--Animales-->
                 <li class="nav-item">
-                    <a class="nav-link <?= (strpos($script_name, 'animales') !== false) ? 'active' : '' ?>" 
-                       href="<?= BASE_URL ?>/animales/index.php">
+                    <a class="nav-link <?= (strpos($script_name, 'animales') !== false) ? 'active' : '' ?>" href="<?= BASE_URL ?>/animales/index.php">
                         <i class="fas fa-paw me-1"></i>Animales
                     </a>
                 </li>
-                <!--Centros-->
                 <li class="nav-item">
-                    <a class="nav-link <?= (strpos($script_name, 'centros') !== false) ? 'active' : '' ?>" 
-                       href="<?= BASE_URL ?>/centros/index.php">
+                    <a class="nav-link <?= (strpos($script_name, 'centros') !== false) ? 'active' : '' ?>" href="<?= BASE_URL ?>/centros/index.php">
                         <i class="fas fa-home me-1"></i>Centros
                     </a>
                 </li>
-                <!--Mapa-->
                 <li class="nav-item">
-                    <a class="nav-link <?= ($pagina_actual == 'mapa') ? 'active' : '' ?>" 
-                       href="<?= BASE_URL ?>/mapa.php">
+                    <a class="nav-link <?= ($pagina_actual == 'mapa') ? 'active' : '' ?>" href="<?= BASE_URL ?>/mapa.php">
                         <i class="fas fa-map-marked-alt me-1"></i>Mapa
                     </a>
                 </li>
-                <!--Panel de control de admin-->
+                <li class="nav-item">
+                    <a class="nav-link" href="<?= BASE_URL ?>/contacto.php">
+                        <i class="fas fa-envelope me-1"></i>Contacto
+                    </a>
+                </li>
                 <?php if (estaLogueado() && esAdmin()): ?>
                 <li class="nav-item">
-                    <a class="nav-link text-warning <?= (strpos($script_name, 'admin') !== false) ? 'active' : '' ?>" 
-                       href="<?= BASE_URL ?>/admin/index.php">
+                    <a class="nav-link text-warning <?= (strpos($script_name, 'admin') !== false) ? 'active' : '' ?>" href="<?= BASE_URL ?>/admin/index.php">
                         <i class="fas fa-cog me-1"></i>Panel Admin
                     </a>
                 </li>
                 <?php endif; ?>
             </ul>
             <div class="navbar-nav">
-                <?php if (estaLogueado()): ?>
+                <?php if (estaLogueado() && !esAdmin()): ?>
                     <div class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" 
-                           href="#" id="dropdownUsuario" role="button" 
-                           data-bs-toggle="dropdown" aria-expanded="false">
-                            <div class="avatar-circle bg-light text-success me-2">
-                                <i class="fas fa-user"></i>
-                            </div>
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="dropdownUsuario" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="avatar-circle bg-light text-success me-2"><i class="fas fa-user"></i></div>
                             <span><?= htmlspecialchars($usuario['nombre']) ?></span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownUsuario">
-                            <!--Enlaces opciones usuarios-->
-                            <li>
-                                <a class="dropdown-item" href="<?= BASE_URL ?>/perfil/index.php">
-                                    <i class="fas fa-user-circle me-2"></i>Mi Perfil
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="<?= BASE_URL ?>/perfil/adopciones.php">
-                                    <i class="fas fa-heart me-2"></i>Mis Adopciones
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="<?= BASE_URL ?>/perfil/datos.php">
-                                    <i class="fas fa-edit me-2"></i>Editar Perfil
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="<?= BASE_URL ?>/auth/logout.php">
-                                    <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
-                                </a>
-                            </li>
-                        </ul>
+    <li><a class="dropdown-item" href="<?= BASE_URL ?>/perfil/index.php"><i class="fas fa-user-circle me-2"></i>Mi Perfil</a></li>
+    <li><a class="dropdown-item" href="<?= BASE_URL ?>/perfil/mis-adopciones.php"><i class="fas fa-heart me-2"></i>Mis Adopciones</a></li>
+    <li><a class="dropdown-item" href="<?= BASE_URL ?>/perfil/mis-datos.php"><i class="fas fa-edit me-2"></i>Editar Perfil</a></li>
+    <li><a class="dropdown-item" href="<?= BASE_URL ?>/perfil/mis-pagos.php"><i class="fas fa-credit-card me-2"></i>Mis Pagos</a></li>
+    <li><a class="dropdown-item" href="<?= BASE_URL ?>/perfil/cambiar-password.php"><i class="fas fa-lock me-2"></i>Cambiar Contraseña</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item text-danger" href="<?= BASE_URL ?>/auth/logout.php"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
+</ul>
                     </div>
-                <?php else: ?>
+                <?php elseif (!estaLogueado()): ?>
                     <a class="btn btn-outline-light me-2" href="<?= BASE_URL ?>/auth/login.php">
                         <i class="fas fa-sign-in-alt me-1"></i>Iniciar Sesión
                     </a>
@@ -100,7 +76,6 @@ $pagina_actual = basename($script_name, '.php');
         </div>
     </div>
 </nav>
-<!--Estilos css-->
 <style>
 .avatar-circle {
     width: 32px;

@@ -1,34 +1,36 @@
 <?php
 require_once '../includes/config.php';
-//Manejo errores
+
 $error = '';
 $success = '';
-//Verificacion con post ya que estamos manejando contraseñas
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = sanitizar($_POST['email']);
     $password = $_POST['password'];
-    //Buscar usuario
+
     $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE email = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch();
-    //Más verificaciones
+
     if ($user) {
         if ($password === 'demo123' || password_verify($password, $user['password_hash'])) {
-            //Crear sesión
             $_SESSION['user_id'] = $user['id_usuario'];
             $_SESSION['user_name'] = $user['nombre'];
             $_SESSION['user_email'] = $user['email'];
             $_SESSION['user_role'] = $user['id_rol'];
-            // Redirección
+
             $redirect = isset($_GET['redirect']) ? $_GET['redirect'] : '';
-            if ($user['id_rol'] == 1) {
-                header('Location: ' . BASE_URL . '/admin/');
+
+            if ((int)$user['id_rol'] === 1) {
+                header('Location: ' . BASE_URL . '/admin/index.php');
+                exit();
             } elseif (!empty($redirect)) {
                 header('Location: ' . urldecode($redirect));
+                exit();
             } else {
-                header('Location: ' . BASE_URL . '/perfil/');
+                header('Location: ' . BASE_URL . '/perfil/index.php');
+                exit();
             }
-            exit();
         } else {
             $error = "Contraseña incorrecta";
         }
@@ -84,6 +86,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                     <i class="fas fa-sign-in-alt me-2"></i>Entrar
                                 </button>
                             </div>
+                                                        <div class="d-grid mb-3">
+                                <a href="<?= BASE_URL ?>/auth/google-login.php" class="btn btn-outline-danger">
+                                    <i class="fab fa-google me-2"></i>Iniciar sesión con Google
+                                </a>
+                            </div>
+                            <hr>
+
+
                             <div class="text-center">
                                 <p class="mb-2">
                                     ¿No tienes cuenta? 

@@ -1,8 +1,18 @@
 <?php
 require_once '../includes/config.php';
 
+if (!estaLogueado()) {
+    header('Location: ' . BASE_URL . '/auth/login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+    exit();
+}
+
 $user = obtenerUsuario();
-//Query para sacar datos de animales que haya adoptado el user o estén pendientes
+if (!$user) {
+    header('Location: ' . BASE_URL . '/auth/logout.php');
+    exit();
+}
+
+// Estadísticas de adopciones
 $adopciones = $pdo->prepare("
     SELECT COUNT(*) as total,
            SUM(CASE WHEN estado = 'Aprobada' THEN 1 ELSE 0 END) as aprobadas,
@@ -12,7 +22,8 @@ $adopciones = $pdo->prepare("
 ");
 $adopciones->execute([$_SESSION['user_id']]);
 $stats = $adopciones->fetch();
-//Datos animal de la database
+
+// Últimas adopciones
 $ultimas = $pdo->prepare("
     SELECT a.*, an.nombre as animal_nombre, an.especie, c.nombre as centro_nombre
     FROM adopciones a
@@ -33,52 +44,23 @@ $ultimas->execute([$_SESSION['user_id']]);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
     <?php include '../includes/navbar.php'; ?>
     <div class="container mt-4">
         <div class="row">
+            <!-- Menú lateral externo -->
             <div class="col-md-3">
-                <div class="card mb-4">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0">Mi Cuenta</h5>
-                    </div>
-                    <div class="list-group list-group-flush">
-                        <a href="<?= BASE_URL ?>/perfil/" class="list-group-item list-group-item-action active">
-                            <i class="fas fa-user-circle me-2"></i>Resumen
-                        </a>
-                        <a href="<?= BASE_URL ?>/perfil/mis-datos.php" class="list-group-item list-group-item-action">
-                            <i class="fas fa-user-edit me-2"></i>Mis Datos
-                        </a>
-                        <a href="<?= BASE_URL ?>/perfil/mis-adopciones.php" class="list-group-item list-group-item-action">
-                            <i class="fas fa-paw me-2"></i>Mis Adopciones
-                        </a>
-                        <a href="<?= BASE_URL ?>/auth/cambiar-password.php" class="list-group-item list-group-item-action">
-                            <i class="fas fa-lock me-2"></i>Cambiar Contraseña
-                        </a>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-body text-center">
-                        <div class="mb-3">
-                            <div class="rounded-circle bg-success d-inline-flex align-items-center justify-content-center" 
-                                 style="width: 80px; height: 80px;">
-                                <i class="fas fa-user text-white fa-2x"></i>
-                            </div>
-                        </div>
-                        <h5><?= htmlspecialchars($user['nombre'] . ' ' . $user['apellido']) ?></h5>
-                        <p class="text-muted mb-2"><?= htmlspecialchars($user['email']) ?></p>
-                        <span class="badge bg-success">Usuario</span>
-                    </div>
-                </div>
+                <?php include 'menu-lateral.php'; ?>
             </div>
+
+            <!-- Contenido principal -->
             <div class="col-md-9">
                 <div class="card">
                     <div class="card-header bg-light">
                         <h4 class="mb-0">Resumen de mi actividad</h4>
                     </div>
-                    <div class="card-body">      
+                    <div class="card-body">
                         <div class="row mb-4">
                             <div class="col-md-4">
                                 <div class="card text-center border-success">
@@ -105,6 +87,7 @@ $ultimas->execute([$_SESSION['user_id']]);
                                 </div>
                             </div>
                         </div>
+
                         <h5 class="mb-3">Mis últimas solicitudes</h5>
                         <?php if ($ultimas->rowCount() > 0): ?>
                             <div class="table-responsive">
@@ -115,7 +98,7 @@ $ultimas->execute([$_SESSION['user_id']]);
                                             <th>Centro</th>
                                             <th>Fecha solicitud</th>
                                             <th>Estado</th>
-                                            <th>Acciones</th>
+                                    
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -135,15 +118,7 @@ $ultimas->execute([$_SESSION['user_id']]);
                                                     'Rechazada' => 'danger'
                                                 ][$adopcion['estado']] ?? 'secondary';
                                                 ?>
-                                                <span class="badge bg-<?= $badgeClass ?>">
-                                                    <?= $adopcion['estado'] ?>
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <a href="<?= BASE_URL ?>/animales/detalle.php?id=<?= $adopcion['id_animal'] ?>" 
-                                                   class="btn btn-sm btn-outline-success">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
+                                                <span class="badge bg-<?= $badgeClass ?>"><?= $adopcion['estado'] ?></span>
                                             </td>
                                         </tr>
                                         <?php endwhile; ?>
@@ -151,9 +126,7 @@ $ultimas->execute([$_SESSION['user_id']]);
                                 </table>
                             </div>
                             <div class="text-center mt-3">
-                                <a href="<?= BASE_URL ?>/perfil/mis-adopciones.php" class="btn btn-success">
-                                    Ver todas mis adopciones
-                                </a>
+                                <a href="<?= BASE_URL ?>/perfil/mis-adopciones.php" class="btn btn-success">Ver todas mis adopciones</a>
                             </div>
                         <?php else: ?>
                             <div class="text-center py-5">
@@ -170,6 +143,6 @@ $ultimas->execute([$_SESSION['user_id']]);
             </div>
         </div>
     </div>
-    <?php include '../includes/footer.php'; ?>    
+    <?php include '../includes/footer.php'; ?>
 </body>
 </html>
