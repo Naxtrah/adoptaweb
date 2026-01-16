@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: mysql
--- Generation Time: Dec 17, 2025 at 11:16 AM
--- Server version: 8.0.42
--- PHP Version: 8.2.27
+-- Servidor: 127.0.0.1
+-- Tiempo de generación: 16-01-2026 a las 15:32:38
+-- Versión del servidor: 10.4.32-MariaDB
+-- Versión de PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,27 +18,27 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `adoptaweb`
+-- Base de datos: `adoptaweb`
 --
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `adopciones`
+-- Estructura de tabla para la tabla `adopciones`
 --
 
 CREATE TABLE `adopciones` (
-  `id_adopcion` int NOT NULL,
-  `id_usuario` int DEFAULT NULL,
-  `id_animal` int DEFAULT NULL,
-  `fecha_solicitud` date DEFAULT (curdate()),
+  `id_adopcion` int(11) NOT NULL,
+  `id_usuario` int(11) DEFAULT NULL,
+  `id_animal` int(11) DEFAULT NULL,
+  `fecha_solicitud` date DEFAULT curdate(),
   `fecha_adopcion` date DEFAULT NULL,
-  `estado` enum('Pendiente','Aprobada','Rechazada') COLLATE utf8mb4_general_ci DEFAULT 'Pendiente',
-  `notas` text COLLATE utf8mb4_general_ci
+  `estado` enum('Pendiente','Aprobada','Rechazada') DEFAULT 'Pendiente',
+  `notas` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `adopciones`
+-- Volcado de datos para la tabla `adopciones`
 --
 
 INSERT INTO `adopciones` (`id_adopcion`, `id_usuario`, `id_animal`, `fecha_solicitud`, `fecha_adopcion`, `estado`, `notas`) VALUES
@@ -54,25 +54,25 @@ INSERT INTO `adopciones` (`id_adopcion`, `id_usuario`, `id_animal`, `fecha_solic
 -- --------------------------------------------------------
 
 --
--- Table structure for table `animales`
+-- Estructura de tabla para la tabla `animales`
 --
 
 CREATE TABLE `animales` (
-  `id_animal` int NOT NULL,
-  `nombre` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `especie` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `raza` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `edad` int DEFAULT NULL,
-  `sexo` enum('Macho','Hembra') COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `descripcion` text COLLATE utf8mb4_general_ci,
+  `id_animal` int(11) NOT NULL,
+  `nombre` varchar(100) DEFAULT NULL,
+  `especie` varchar(50) DEFAULT NULL,
+  `raza` varchar(100) DEFAULT NULL,
+  `edad` int(11) DEFAULT NULL,
+  `sexo` enum('Macho','Hembra') DEFAULT NULL,
+  `descripcion` text DEFAULT NULL,
   `fecha_ingreso` date DEFAULT NULL,
-  `estado` enum('Disponible','Adoptado','Reservado','En tratamiento') COLLATE utf8mb4_general_ci DEFAULT 'Disponible',
-  `id_centro` int DEFAULT NULL,
-  `imagen_url` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL
+  `estado` enum('Disponible','Adoptado','Reservado','En tratamiento') DEFAULT 'Disponible',
+  `id_centro` int(11) DEFAULT NULL,
+  `imagen_url` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `animales`
+-- Volcado de datos para la tabla `animales`
 --
 
 INSERT INTO `animales` (`id_animal`, `nombre`, `especie`, `raza`, `edad`, `sexo`, `descripcion`, `fecha_ingreso`, `estado`, `id_centro`, `imagen_url`) VALUES
@@ -105,18 +105,18 @@ INSERT INTO `animales` (`id_animal`, `nombre`, `especie`, `raza`, `edad`, `sexo`
 -- --------------------------------------------------------
 
 --
--- Table structure for table `animal_vacunas`
+-- Estructura de tabla para la tabla `animal_vacunas`
 --
 
 CREATE TABLE `animal_vacunas` (
-  `id_animal` int NOT NULL,
-  `id_vacuna` int NOT NULL,
+  `id_animal` int(11) NOT NULL,
+  `id_vacuna` int(11) NOT NULL,
   `fecha_aplicacion` date DEFAULT NULL,
   `fecha_proxima` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `animal_vacunas`
+-- Volcado de datos para la tabla `animal_vacunas`
 --
 
 INSERT INTO `animal_vacunas` (`id_animal`, `id_vacuna`, `fecha_aplicacion`, `fecha_proxima`) VALUES
@@ -155,46 +155,68 @@ INSERT INTO `animal_vacunas` (`id_animal`, `id_vacuna`, `fecha_aplicacion`, `fec
 -- --------------------------------------------------------
 
 --
--- Table structure for table `centros`
+-- Estructura de tabla para la tabla `centros`
 --
 
 CREATE TABLE `centros` (
-  `id_centro` int NOT NULL,
-  `nombre` varchar(150) COLLATE utf8mb4_general_ci NOT NULL,
-  `direccion` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `telefono` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `email` varchar(150) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `web` varchar(150) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `fecha_alta` datetime DEFAULT CURRENT_TIMESTAMP
+  `id_centro` int(11) NOT NULL,
+  `nombre` varchar(150) NOT NULL,
+  `direccion` varchar(255) DEFAULT NULL,
+  `telefono` varchar(20) DEFAULT NULL,
+  `email` varchar(150) DEFAULT NULL,
+  `web` varchar(150) DEFAULT NULL,
+  `fecha_alta` datetime DEFAULT current_timestamp(),
+  `latitud` decimal(10,8) DEFAULT NULL,
+  `longitud` decimal(10,8) DEFAULT NULL,
+  `imagen_url` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `centros`
+-- Volcado de datos para la tabla `centros`
 --
 
-INSERT INTO `centros` (`id_centro`, `nombre`, `direccion`, `telefono`, `email`, `web`, `fecha_alta`) VALUES
-(1, 'Refugio Patitas Felices', 'Calle Luna 12, Madrid', '600123456', 'contacto@patitasfelices.org', 'www.patitasfelices.org', '2025-11-02 17:25:55'),
-(2, 'Hogar Animal Madrid', 'Av. Libertad 45, Madrid', '610987654', 'info@hogaranimal.org', 'www.hogaranimal.org', '2025-11-02 17:25:55'),
-(3, 'Protectora Huellitas', 'Calle Sol 33, Valencia', '620555333', 'huellitas@protectora.org', 'www.huellitas.org', '2025-11-02 17:25:55'),
-(4, 'Asociación Paticorazones', 'Calle Verde 99, Sevilla', '644222999', 'info@paticorazones.org', 'www.paticorazones.org', '2025-11-02 17:25:55'),
-(5, 'Centro Animalife', 'Av. Central 12, Barcelona', '655444888', 'info@animalife.org', 'www.animalife.org', '2025-11-02 17:25:55');
+INSERT INTO `centros` (`id_centro`, `nombre`, `direccion`, `telefono`, `email`, `web`, `fecha_alta`, `latitud`, `longitud`, `imagen_url`) VALUES
+(1, 'Refugio Patitas Felices', 'Puerta del Sol, 1, 28013 Madrid', '600123456', 'contacto@patitasfelices.org', 'www.patitasfelices.org', '2025-11-02 17:25:55', 40.41688900, -3.70336000, NULL),
+(2, 'Hogar Animal Madrid', 'Calle de Bravo Murillo, 85, 28003 Madrid', '610987654', 'info@hogaranimal.org', 'www.hogaranimal.org', '2025-11-02 17:25:55', 40.42908000, -3.70156000, NULL),
+(3, 'Protectora Huellitas', 'Avenida de la Albufera, 285, 28041 Madrid', '620555333', 'huellitas@protectora.org', 'www.huellitas.org', '2025-11-02 17:25:55', 40.38960000, -3.67815000, NULL),
+(4, 'Asociación Paticorazones', 'Calle de Raimundo Fernández Villaverde, 65, 28003 Madrid', '644222999', 'info@paticorazones.org', 'www.paticorazones.org', '2025-11-02 17:25:55', 40.45320000, -3.68826000, NULL),
+(5, 'Centro Animalife', 'Calle de la Princesa, 58, 28008 Madrid', '655444888', 'info@animalife.org', 'www.animalife.org', '2025-11-02 17:25:55', 40.43410000, -3.71262000, NULL);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `facturas`
+-- Estructura de tabla para la tabla `contactos`
+--
+
+CREATE TABLE `contactos` (
+  `id_contacto` int(11) NOT NULL,
+  `nombre` varchar(100) NOT NULL,
+  `email` varchar(150) NOT NULL,
+  `telefono` varchar(20) DEFAULT NULL,
+  `asunto` varchar(200) NOT NULL,
+  `mensaje` text NOT NULL,
+  `fecha_contacto` datetime DEFAULT current_timestamp(),
+  `estado` enum('Pendiente','Respondido','Archivado') DEFAULT 'Pendiente',
+  `respuesta` text DEFAULT NULL,
+  `fecha_respuesta` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `facturas`
 --
 
 CREATE TABLE `facturas` (
-  `id_factura` int NOT NULL,
-  `id_pago` int DEFAULT NULL,
-  `numero_factura` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `fecha_emision` datetime DEFAULT CURRENT_TIMESTAMP,
-  `pdf_dirr` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
+  `id_factura` int(11) NOT NULL,
+  `id_pago` int(11) DEFAULT NULL,
+  `numero_factura` varchar(50) DEFAULT NULL,
+  `fecha_emision` datetime DEFAULT current_timestamp(),
+  `pdf_dirr` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `facturas`
+-- Volcado de datos para la tabla `facturas`
 --
 
 INSERT INTO `facturas` (`id_factura`, `id_pago`, `numero_factura`, `fecha_emision`, `pdf_dirr`) VALUES
@@ -210,21 +232,34 @@ INSERT INTO `facturas` (`id_factura`, `id_pago`, `numero_factura`, `fecha_emisio
 -- --------------------------------------------------------
 
 --
--- Table structure for table `pagos`
+-- Estructura de tabla para la tabla `newsletter`
+--
+
+CREATE TABLE `newsletter` (
+  `id_newsletter` int(11) NOT NULL,
+  `email` varchar(150) NOT NULL,
+  `fecha_registro` datetime DEFAULT current_timestamp(),
+  `activo` tinyint(1) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `pagos`
 --
 
 CREATE TABLE `pagos` (
-  `id_pago` int NOT NULL,
-  `id_usuario` int DEFAULT NULL,
-  `id_centro` int DEFAULT NULL,
+  `id_pago` int(11) NOT NULL,
+  `id_usuario` int(11) DEFAULT NULL,
+  `id_centro` int(11) DEFAULT NULL,
   `monto` decimal(10,2) DEFAULT NULL,
-  `concepto` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `fecha_pago` datetime DEFAULT CURRENT_TIMESTAMP,
-  `metodo_pago` enum('Tarjeta','PayPal','Transferencia') COLLATE utf8mb4_general_ci DEFAULT NULL
+  `concepto` varchar(255) DEFAULT NULL,
+  `fecha_pago` datetime DEFAULT current_timestamp(),
+  `metodo_pago` enum('Tarjeta','PayPal','Transferencia') DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `pagos`
+-- Volcado de datos para la tabla `pagos`
 --
 
 INSERT INTO `pagos` (`id_pago`, `id_usuario`, `id_centro`, `monto`, `concepto`, `fecha_pago`, `metodo_pago`) VALUES
@@ -240,16 +275,16 @@ INSERT INTO `pagos` (`id_pago`, `id_usuario`, `id_centro`, `monto`, `concepto`, 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `roles`
+-- Estructura de tabla para la tabla `roles`
 --
 
 CREATE TABLE `roles` (
-  `id_rol` int NOT NULL,
-  `nombre_rol` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL
+  `id_rol` int(11) NOT NULL,
+  `nombre_rol` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `roles`
+-- Volcado de datos para la tabla `roles`
 --
 
 INSERT INTO `roles` (`id_rol`, `nombre_rol`) VALUES
@@ -259,23 +294,23 @@ INSERT INTO `roles` (`id_rol`, `nombre_rol`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `usuarios`
+-- Estructura de tabla para la tabla `usuarios`
 --
 
 CREATE TABLE `usuarios` (
-  `id_usuario` int NOT NULL,
-  `nombre` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `apellido` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `email` varchar(150) COLLATE utf8mb4_general_ci NOT NULL,
-  `password_hash` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `telefono` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `direccion` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `fecha_registro` datetime DEFAULT CURRENT_TIMESTAMP,
-  `id_rol` int DEFAULT '2'
+  `id_usuario` int(11) NOT NULL,
+  `nombre` varchar(100) NOT NULL,
+  `apellido` varchar(100) DEFAULT NULL,
+  `email` varchar(150) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `telefono` varchar(20) DEFAULT NULL,
+  `direccion` varchar(255) DEFAULT NULL,
+  `fecha_registro` datetime DEFAULT current_timestamp(),
+  `id_rol` int(11) DEFAULT 2
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `usuarios`
+-- Volcado de datos para la tabla `usuarios`
 --
 
 INSERT INTO `usuarios` (`id_usuario`, `nombre`, `apellido`, `email`, `password_hash`, `telefono`, `direccion`, `fecha_registro`, `id_rol`) VALUES
@@ -292,18 +327,18 @@ INSERT INTO `usuarios` (`id_usuario`, `nombre`, `apellido`, `email`, `password_h
 -- --------------------------------------------------------
 
 --
--- Table structure for table `vacunas`
+-- Estructura de tabla para la tabla `vacunas`
 --
 
 CREATE TABLE `vacunas` (
-  `id_vacuna` int NOT NULL,
-  `nombre` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `descripcion` text COLLATE utf8mb4_general_ci,
+  `id_vacuna` int(11) NOT NULL,
+  `nombre` varchar(100) DEFAULT NULL,
+  `descripcion` text DEFAULT NULL,
   `precio` decimal(8,2) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `vacunas`
+-- Volcado de datos para la tabla `vacunas`
 --
 
 INSERT INTO `vacunas` (`id_vacuna`, `nombre`, `descripcion`, `precio`) VALUES
@@ -319,11 +354,11 @@ INSERT INTO `vacunas` (`id_vacuna`, `nombre`, `descripcion`, `precio`) VALUES
 (10, 'Bordetella', 'Tos de las perreras', 27.00);
 
 --
--- Indexes for dumped tables
+-- Índices para tablas volcadas
 --
 
 --
--- Indexes for table `adopciones`
+-- Indices de la tabla `adopciones`
 --
 ALTER TABLE `adopciones`
   ADD PRIMARY KEY (`id_adopcion`),
@@ -331,27 +366,33 @@ ALTER TABLE `adopciones`
   ADD KEY `id_animal` (`id_animal`);
 
 --
--- Indexes for table `animales`
+-- Indices de la tabla `animales`
 --
 ALTER TABLE `animales`
   ADD PRIMARY KEY (`id_animal`),
   ADD KEY `id_centro` (`id_centro`);
 
 --
--- Indexes for table `animal_vacunas`
+-- Indices de la tabla `animal_vacunas`
 --
 ALTER TABLE `animal_vacunas`
   ADD PRIMARY KEY (`id_animal`,`id_vacuna`),
   ADD KEY `id_vacuna` (`id_vacuna`);
 
 --
--- Indexes for table `centros`
+-- Indices de la tabla `centros`
 --
 ALTER TABLE `centros`
   ADD PRIMARY KEY (`id_centro`);
 
 --
--- Indexes for table `facturas`
+-- Indices de la tabla `contactos`
+--
+ALTER TABLE `contactos`
+  ADD PRIMARY KEY (`id_contacto`);
+
+--
+-- Indices de la tabla `facturas`
 --
 ALTER TABLE `facturas`
   ADD PRIMARY KEY (`id_factura`),
@@ -359,7 +400,14 @@ ALTER TABLE `facturas`
   ADD KEY `id_pago` (`id_pago`);
 
 --
--- Indexes for table `pagos`
+-- Indices de la tabla `newsletter`
+--
+ALTER TABLE `newsletter`
+  ADD PRIMARY KEY (`id_newsletter`),
+  ADD UNIQUE KEY `email` (`email`);
+
+--
+-- Indices de la tabla `pagos`
 --
 ALTER TABLE `pagos`
   ADD PRIMARY KEY (`id_pago`),
@@ -367,13 +415,13 @@ ALTER TABLE `pagos`
   ADD KEY `id_centro` (`id_centro`);
 
 --
--- Indexes for table `roles`
+-- Indices de la tabla `roles`
 --
 ALTER TABLE `roles`
   ADD PRIMARY KEY (`id_rol`);
 
 --
--- Indexes for table `usuarios`
+-- Indices de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
   ADD PRIMARY KEY (`id_usuario`),
@@ -381,102 +429,114 @@ ALTER TABLE `usuarios`
   ADD KEY `id_rol` (`id_rol`);
 
 --
--- Indexes for table `vacunas`
+-- Indices de la tabla `vacunas`
 --
 ALTER TABLE `vacunas`
   ADD PRIMARY KEY (`id_vacuna`);
 
 --
--- AUTO_INCREMENT for dumped tables
+-- AUTO_INCREMENT de las tablas volcadas
 --
 
 --
--- AUTO_INCREMENT for table `adopciones`
+-- AUTO_INCREMENT de la tabla `adopciones`
 --
 ALTER TABLE `adopciones`
-  MODIFY `id_adopcion` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id_adopcion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
--- AUTO_INCREMENT for table `animales`
+-- AUTO_INCREMENT de la tabla `animales`
 --
 ALTER TABLE `animales`
-  MODIFY `id_animal` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id_animal` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
--- AUTO_INCREMENT for table `centros`
+-- AUTO_INCREMENT de la tabla `centros`
 --
 ALTER TABLE `centros`
-  MODIFY `id_centro` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_centro` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
--- AUTO_INCREMENT for table `facturas`
+-- AUTO_INCREMENT de la tabla `contactos`
+--
+ALTER TABLE `contactos`
+  MODIFY `id_contacto` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `facturas`
 --
 ALTER TABLE `facturas`
-  MODIFY `id_factura` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id_factura` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
--- AUTO_INCREMENT for table `pagos`
+-- AUTO_INCREMENT de la tabla `newsletter`
+--
+ALTER TABLE `newsletter`
+  MODIFY `id_newsletter` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `pagos`
 --
 ALTER TABLE `pagos`
-  MODIFY `id_pago` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
--- AUTO_INCREMENT for table `roles`
+-- AUTO_INCREMENT de la tabla `roles`
 --
 ALTER TABLE `roles`
-  MODIFY `id_rol` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_rol` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
--- AUTO_INCREMENT for table `usuarios`
+-- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id_usuario` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
--- AUTO_INCREMENT for table `vacunas`
+-- AUTO_INCREMENT de la tabla `vacunas`
 --
 ALTER TABLE `vacunas`
-  MODIFY `id_vacuna` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id_vacuna` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
--- Constraints for dumped tables
+-- Restricciones para tablas volcadas
 --
 
 --
--- Constraints for table `adopciones`
+-- Filtros para la tabla `adopciones`
 --
 ALTER TABLE `adopciones`
   ADD CONSTRAINT `adopciones_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`),
   ADD CONSTRAINT `adopciones_ibfk_2` FOREIGN KEY (`id_animal`) REFERENCES `animales` (`id_animal`);
 
 --
--- Constraints for table `animales`
+-- Filtros para la tabla `animales`
 --
 ALTER TABLE `animales`
   ADD CONSTRAINT `animales_ibfk_1` FOREIGN KEY (`id_centro`) REFERENCES `centros` (`id_centro`);
 
 --
--- Constraints for table `animal_vacunas`
+-- Filtros para la tabla `animal_vacunas`
 --
 ALTER TABLE `animal_vacunas`
   ADD CONSTRAINT `animal_vacunas_ibfk_1` FOREIGN KEY (`id_animal`) REFERENCES `animales` (`id_animal`),
   ADD CONSTRAINT `animal_vacunas_ibfk_2` FOREIGN KEY (`id_vacuna`) REFERENCES `vacunas` (`id_vacuna`);
 
 --
--- Constraints for table `facturas`
+-- Filtros para la tabla `facturas`
 --
 ALTER TABLE `facturas`
   ADD CONSTRAINT `facturas_ibfk_1` FOREIGN KEY (`id_pago`) REFERENCES `pagos` (`id_pago`);
 
 --
--- Constraints for table `pagos`
+-- Filtros para la tabla `pagos`
 --
 ALTER TABLE `pagos`
   ADD CONSTRAINT `pagos_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`),
   ADD CONSTRAINT `pagos_ibfk_2` FOREIGN KEY (`id_centro`) REFERENCES `centros` (`id_centro`);
 
 --
--- Constraints for table `usuarios`
+-- Filtros para la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
   ADD CONSTRAINT `usuarios_ibfk_1` FOREIGN KEY (`id_rol`) REFERENCES `roles` (`id_rol`);

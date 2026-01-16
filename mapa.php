@@ -78,11 +78,19 @@ $centros = $stmt->fetchAll();
                     <div class="card-body p-0">
                         <div class="list-group list-group-flush" id="lista-centros">
                             <?php if (count($centros) > 0): ?>
+                              
                                 <?php foreach ($centros as $centro): 
-                                    //Coordenadas ficticias de la ubicación de nuestro local
-                                    $lat = 40.4168 + (rand(-50, 50) / 1000);
-                                    $lng = -3.7038 + (rand(-50, 50) / 1000);
+                                   
+                                    if ($centro['latitud'] && $centro['longitud']) {
+                                        $lat = $centro['latitud'];
+                                        $lng = $centro['longitud'];
+                                    } else {
+                                       
+                                        $lat = 40.4168 + (rand(-50, 50) / 1000);
+                                        $lng = -3.7038 + (rand(-50, 50) / 1000);
+                                    }
                                 ?>
+                               
                                 <div class="list-group-item centro-item" 
                                      data-id="<?= $centro['id_centro'] ?>"
                                      data-lat="<?= $lat ?>"
