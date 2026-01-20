@@ -1,11 +1,7 @@
 <?php
 require_once '../includes/config.php';
 $id_centro = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-<<<<<<< HEAD
-/*Sumar los animales disponibles por centro*/
-=======
 
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 $stmt = $pdo->prepare("
     SELECT c.*, 
            COUNT(a.id_animal) as total_animales,
@@ -22,11 +18,7 @@ if (!$centro) {
     header('Location: ' . BASE_URL . '/centros');
     exit();
 }
-<<<<<<< HEAD
-/*Conseguir los datos de los animales disponibles y reservadors*/
-=======
 
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 $animales = $pdo->prepare("
     SELECT * FROM animales 
     WHERE id_centro = ? 
@@ -54,7 +46,6 @@ $animales->execute([$id_centro]);
         .animal-card:hover {
             transform: translateY(-5px);
         }
-        
     </style>
 </head>
 <body>
@@ -74,14 +65,10 @@ $animales->execute([$id_centro]);
                             <span class="badge bg-light text-dark fs-6"><i class="fas fa-paw me-1"></i><?= $centro['total_animales'] ?> animales</span>
                             <span class="badge bg-light text-dark fs-6"><i class="fas fa-heart me-1"></i><?= $centro['disponibles'] ?> disponibles</span>
                             <?php if ($centro['web']): ?>
-<<<<<<< HEAD
-                                <a href="https://instagram.com" target="_blank" class="badge bg-white text-success fs-6 text-decoration-none"><i class="fas fa-globe me-1"></i>Web oficial</a>
-=======
                                 <a href="<?= $centro['web'] ?>" target="_blank" class="badge bg-white text-success fs-6 text-decoration-none"><i class="fas fa-globe me-1"></i>Web oficial</a>
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
                             <?php endif; ?>
                         </div>
-                        <a href="<?= BASE_URL ?>/animales?centro=<?= $id_centro ?>" class="btn btn-light btn-lg"><i class="fas fa-paw me-2"></i>Ver animales</a>
+                        <a href="<?= BASE_URL ?>/animales/index.php?centro=<?= $id_centro ?>" class="btn btn-light btn-lg"></i>Ver animales</a>
                     </div>
                     <div class="col-md-4 text-center">
                         <div class="bg-white bg-opacity-25 p-4 rounded-circle d-inline-block">
@@ -162,11 +149,7 @@ $animales->execute([$id_centro]);
                     <div class="card-body text-center">
                         <i class="fas fa-map-marker-alt fa-3x text-success mb-3"></i>
                         <p><?= htmlspecialchars($centro['direccion']) ?></p>
-<<<<<<< HEAD
-                        <a href="https://instagram.com" class="btn btn-success w-100">Ver en el mapa</a>
-=======
-                        <a href="<?= BASE_URL ?>/mapa?centro=<?= $id_centro ?>" class="btn btn-success w-100">Ver en el mapa</a>
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
+                        <a href="<?= BASE_URL ?>/mapa.php?centro=<?= $id_centro ?>" class="btn btn-success w-100">Ver en el mapa</a>
                     </div>
                 </div>
             </div>

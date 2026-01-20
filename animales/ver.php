@@ -2,11 +2,6 @@
 require_once '../includes/config.php';
 $id_animal = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-<<<<<<< HEAD
-//Obtener información del animal
-=======
-// Obtener información del animal
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 $stmt = $pdo->prepare("
     SELECT a.*, c.nombre as centro_nombre, c.direccion, c.telefono, c.email, c.web, c.latitud, c.longitud
     FROM animales a
@@ -21,11 +16,6 @@ if (!$animal) {
     exit();
 }
 
-<<<<<<< HEAD
-//Obtener vacunas del animal
-=======
-// Obtener vacunas del animal
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 $vacunas = $pdo->prepare("
     SELECT v.*, av.fecha_aplicacion, av.fecha_proxima
     FROM animal_vacunas av
@@ -34,11 +24,6 @@ $vacunas = $pdo->prepare("
 ");
 $vacunas->execute([$id_animal]);
 
-<<<<<<< HEAD
-//Verificar si el usuario actual ya tiene solicitud para este animal
-=======
-// Verificar si el usuario actual ya tiene solicitud para este animal
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 $tiene_solicitud = false;
 if (estaLogueado()) {
     $stmt = $pdo->prepare("
@@ -50,17 +35,8 @@ if (estaLogueado()) {
     $tiene_solicitud = $stmt->fetchColumn() > 0;
 }
 
-<<<<<<< HEAD
-//Corregir ruta de imagen
 $imagen_animal = '';
 if ($animal['imagen_url']) {
-    //Si la ruta comienza con ./img/, corregirla
-=======
-// Corregir ruta de imagen
-$imagen_animal = '';
-if ($animal['imagen_url']) {
-    // Si la ruta comienza con ./img/, corregirla
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
     if (strpos($animal['imagen_url'], './img/') === 0) {
         $imagen_animal = '../' . substr($animal['imagen_url'], 2);
     } else {
@@ -100,16 +76,11 @@ if ($animal['imagen_url']) {
             padding-left: 15px;
             margin-bottom: 10px;
         }
-        a{
-            text-decoration: none;
-            color: #727573;
-        }
     </style>
 </head>
 <body>
     <?php include '../includes/navbar.php'; ?>
     <div class="container mt-4">
-        <!-- Ruta de navegación -->
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/">Inicio</a></li>
@@ -117,11 +88,6 @@ if ($animal['imagen_url']) {
                 <li class="breadcrumb-item active"><?= htmlspecialchars($animal['nombre']) ?></li>
             </ol>
         </nav>
-<<<<<<< HEAD
-        <!--Header del animal-->
-=======
-        <!-- Header del animal -->
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
         <div class="animal-header mb-5">
             <div class="row">
                 <div class="col-lg-6">
@@ -170,11 +136,6 @@ if ($animal['imagen_url']) {
                             <?= htmlspecialchars($animal['direccion']) ?>
                         </p>
                     </div>
-<<<<<<< HEAD
-                    <!--Botones de acción-->
-=======
-                    <!-- Botones de acción -->
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
                     <div class="d-grid gap-3">
                         <?php if ($animal['estado'] == 'Disponible'): ?>
                             <?php if (estaLogueado()): ?>
@@ -183,15 +144,9 @@ if ($animal['imagen_url']) {
                                         <i class="fas fa-clock me-2"></i>Solicitud en proceso
                                     </button>
                                 <?php else: ?>
-<<<<<<< HEAD
-                                    <a href="<?= BASE_URL ?>/pagos/realizar.php?id_adopcion=<?= $id_adopcion ?>&tipo=adopcion" class="btn btn-success btn-lg">
+                                    <a href="<?= BASE_URL ?>/animales/adoptar.php?id=<?= $animal['id_animal'] ?>" class="btn btn-success btn-lg">
                                         <i class="fas fa-heart me-2"></i>Solicitar adopción
                                     </a>
-=======
-                                   <a href="<?= BASE_URL ?>/pagos/realizar.php?id_adopcion=<?= $id_adopcion ?>&tipo=adopcion" class="btn btn-success btn-lg">
-    <i class="fas fa-heart me-2"></i>Solicitar adopción
-</a>
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
                                 <?php endif; ?>
                             <?php else: ?>
                                 <a href="<?= BASE_URL ?>/auth/login.php?redirect=<?= urlencode($_SERVER['REQUEST_URI']) ?>" 
@@ -212,12 +167,7 @@ if ($animal['imagen_url']) {
                 </div>
             </div>
         </div>
-<<<<<<< HEAD
-=======
-        <!-- Información más detallada -->
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
         <div class="row">
-            <!--Descripción-->
             <div class="col-lg-8">
                 <div class="card mb-4">
                     <div class="card-header bg-light">
@@ -256,7 +206,6 @@ if ($animal['imagen_url']) {
                         </div>
                     </div>
                 </div>
-                <!-- Vacunas -->
                 <?php if ($vacunas->rowCount() > 0): ?>
                 <div class="card">
                     <div class="card-header bg-light">
@@ -290,12 +239,7 @@ if ($animal['imagen_url']) {
                 </div>
                 <?php endif; ?>
             </div>
-<<<<<<< HEAD
-=======
-            <!-- Barra lateral -->
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
             <div class="col-lg-4">
-                <!-- Información del centro -->
                 <div class="card mb-4">
                     <div class="card-header bg-success text-white">
                         <h5 class="mb-0">
@@ -336,7 +280,6 @@ if ($animal['imagen_url']) {
                         </div>
                     </div>
                 </div>
-                <!-- Información adicional -->
                 <div class="card mb-4">
                     <div class="card-header bg-light">
                         <h5 class="mb-0">
@@ -361,7 +304,6 @@ if ($animal['imagen_url']) {
                 </div>
             </div>
         </div>
-        <!-- Animales relacionados -->
         <?php
         $relacionados = $pdo->prepare("
             SELECT a.*, c.nombre as centro_nombre
@@ -383,7 +325,6 @@ if ($animal['imagen_url']) {
             </h4>
             <div class="row g-4">
                 <?php while ($relacionado = $relacionados->fetch()): 
-                    // Corregir ruta de imagen para relacionados
                     $imagen_relacionado = '';
                     if ($relacionado['imagen_url']) {
                         if (strpos($relacionado['imagen_url'], './img/') === 0) {

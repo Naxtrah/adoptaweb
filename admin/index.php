@@ -4,11 +4,7 @@ if (!estaLogueado() || !esAdmin()) {
     header('Location: ' . BASE_URL . '/index.php');
     exit();
 }
-<<<<<<< HEAD
-//Stats de la página
-=======
 
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 $stats = [
     'total_animales' => $pdo->query("SELECT COUNT(*) FROM animales")->fetchColumn(),
     'animales_disponibles' => $pdo->query("SELECT COUNT(*) FROM animales WHERE estado = 'Disponible'")->fetchColumn(),
@@ -19,7 +15,6 @@ $stats = [
     'adopciones_este_mes' => $pdo->query("SELECT COUNT(*) FROM adopciones WHERE fecha_solicitud >= DATE_SUB(NOW(), INTERVAL 30 DAY)")->fetchColumn(),
     'total_centros' => $pdo->query("SELECT COUNT(*) FROM centros")->fetchColumn()
 ];
-//Contar las adopciones totales en un mes
 $adopciones_mes = $pdo->query("
     SELECT DATE_FORMAT(fecha_solicitud, '%Y-%m') as mes, COUNT(*) as total
     FROM adopciones 
@@ -27,7 +22,6 @@ $adopciones_mes = $pdo->query("
     GROUP BY DATE_FORMAT(fecha_solicitud, '%Y-%m')
     ORDER BY mes DESC
 ")->fetchAll();
-//Animales pendiendes datos
 $pendientes = $pdo->query("
     SELECT a.*, u.nombre as usuario_nombre, u.email, an.nombre as animal_nombre
     FROM adopciones a
@@ -73,10 +67,6 @@ $pendientes = $pdo->query("
     </div>
 </div>
 <script>
-<<<<<<< HEAD
-/*Inserción de todos los datos obtenidos con json*/
-=======
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 const ctx = document.getElementById('adopcionesChart').getContext('2d');
 new Chart(ctx, {
     type: 'line',

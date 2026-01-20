@@ -1,11 +1,6 @@
 <?php
 require_once '../includes/config.php';
 
-<<<<<<< HEAD
-//Verificar si el usuario está logueado
-=======
-// Verificar si el usuario está logueado
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 if (!estaLogueado()) {
     $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];
     $_SESSION['error_message'] = 'Debes iniciar sesión para solicitar una adopción';
@@ -15,11 +10,6 @@ if (!estaLogueado()) {
 
 $id_animal = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-<<<<<<< HEAD
-//Obtener información del animal
-=======
-// Obtener información del animal
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 $stmt = $pdo->prepare("
     SELECT a.*, c.nombre as centro_nombre, c.direccion as centro_direccion, 
            c.telefono as centro_telefono, c.email as centro_email
@@ -30,11 +20,6 @@ $stmt = $pdo->prepare("
 $stmt->execute([$id_animal]);
 $animal = $stmt->fetch();
 
-<<<<<<< HEAD
-//Validaciones
-=======
-// Validaciones
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 $error = '';
 if (!$animal) {
     $error = 'Animal no encontrado';
@@ -42,33 +27,18 @@ if (!$animal) {
     $error = 'Este animal no está disponible para adopción';
 }
 
-<<<<<<< HEAD
-//Si hay error, redirigir
-=======
-// Si hay error, redirigir
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 if ($error) {
     $_SESSION['error_message'] = $error;
     header('Location: ' . BASE_URL . '/animales');
     exit();
 }
 
-<<<<<<< HEAD
-//Obtener datos del usuario
-=======
-// Obtener datos del usuario
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 $usuario = obtenerUsuario();
 if (!$usuario) {
     header('Location: ' . BASE_URL . '/auth/logout.php');
     exit();
 }
 
-<<<<<<< HEAD
-//Verificar si ya tiene solicitud pendiente para este animal
-=======
-// Verificar si ya tiene solicitud pendiente para este animal
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 $stmt = $pdo->prepare("
     SELECT COUNT(*) FROM adopciones 
     WHERE id_usuario = ? AND id_animal = ? AND estado = 'Pendiente'
@@ -76,11 +46,6 @@ $stmt = $pdo->prepare("
 $stmt->execute([$_SESSION['user_id'], $id_animal]);
 $tiene_solicitud = $stmt->fetchColumn() > 0;
 
-<<<<<<< HEAD
-//Procesar formulario
-=======
-// Procesar formulario
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 $success = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$tiene_solicitud) {
     $motivacion = trim($_POST['motivacion'] ?? '');
@@ -90,11 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$tiene_solicitud) {
     $horas_solo = $_POST['horas_solo'] ?? '';
     $acepto_terminos = isset($_POST['acepto_terminos']);
     
-<<<<<<< HEAD
-    //Validaciones
-=======
-    // Validaciones
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
     if (empty($motivacion)) {
         $error = 'Por favor, explica tu motivación para adoptar';
     } elseif (empty($experiencia)) {
@@ -105,17 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$tiene_solicitud) {
         $error = 'Debes aceptar los términos y condiciones';
     } else {
         try {
-<<<<<<< HEAD
-            //Iniciar transacción
             $pdo->beginTransaction();
             
-            //Insertar solicitud de adopción
-=======
-            // Iniciar transacción
-            $pdo->beginTransaction();
-            
-            // Insertar solicitud de adopción
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
             $stmt = $pdo->prepare("
                 INSERT INTO adopciones 
                 (id_usuario, id_animal, fecha_solicitud, estado, notas) 
@@ -129,12 +80,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$tiene_solicitud) {
             $notas .= "Horas solo al día: $horas_solo";
             
             $stmt->execute([$_SESSION['user_id'], $id_animal, $notas]);
+            $id_adopcion = $pdo->lastInsertId();
             
-<<<<<<< HEAD
-            //Actualizar estado del animal
-=======
-            // Actualizar estado del animal a "Reservado"
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
+            $token_pago = hash('sha256', uniqid('', true));
+            
+            $sql_pago = "INSERT INTO adopciones_pagos (id_adopcion, id_usuario, monto, estado, token_pago) 
+                         VALUES (?, ?, 60.00, 'Pendiente', ?)";
+            $stmt = $pdo->prepare($sql_pago);
+            $stmt->execute([$id_adopcion, $_SESSION['user_id'], $token_pago]);
+            
             $stmt = $pdo->prepare("
                 UPDATE animales SET estado = 'Reservado' 
                 WHERE id_animal = ?
@@ -143,14 +97,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$tiene_solicitud) {
             
             $pdo->commit();
             
-            $success = '¡Solicitud de adopción enviada correctamente!';
+            $success = '¡Solicitud de adopción enviada! El administrador revisará tu solicitud. Si es aprobada, podrás proceder al pago.';
             $tiene_solicitud = true;
-            
-<<<<<<< HEAD
-            //Enviar email de confirmación
-=======
-            // Enviar email de confirmación (pendiente de implementar)
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
             
         } catch (Exception $e) {
             $pdo->rollBack();
@@ -159,11 +107,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$tiene_solicitud) {
     }
 }
 
-<<<<<<< HEAD
-//Corregir ruta de imagen
-=======
-// Corregir ruta de imagen
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 $imagen_animal = '';
 if ($animal['imagen_url']) {
     if (strpos($animal['imagen_url'], './img/') === 0) {
@@ -225,11 +168,6 @@ if ($animal['imagen_url']) {
     <?php include '../includes/navbar.php'; ?>
     
     <div class="container mt-4">
-<<<<<<< HEAD
-        <!--Ruta de navegación-->
-=======
-        <!-- Ruta de navegación -->
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/">Inicio</a></li>
@@ -239,11 +177,6 @@ if ($animal['imagen_url']) {
             </ol>
         </nav>
         
-<<<<<<< HEAD
-        <!--Indicador de pasos-->
-=======
-        <!-- Indicador de pasos -->
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
         <div class="step-indicator">
             <div class="step active">
                 <div class="step-number">1</div>
@@ -264,11 +197,6 @@ if ($animal['imagen_url']) {
         </div>
         
         <div class="row">
-<<<<<<< HEAD
-            <!--Información del animal-->
-=======
-            <!-- Información del animal -->
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
             <div class="col-lg-4">
                 <div class="card mb-4">
                     <div class="card-header bg-success text-white">
@@ -303,11 +231,6 @@ if ($animal['imagen_url']) {
                     </div>
                 </div>
                 
-<<<<<<< HEAD
-                <!--Información del centro-->
-=======
-                <!-- Información del centro -->
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
                 <div class="card">
                     <div class="card-header bg-light">
                         <h5 class="mb-0">
@@ -333,11 +256,6 @@ if ($animal['imagen_url']) {
                 </div>
             </div>
             
-<<<<<<< HEAD
-            <!--Formulario de adopción-->
-=======
-            <!-- Formulario de adopción -->
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-header bg-primary text-white">
@@ -370,7 +288,6 @@ if ($animal['imagen_url']) {
                         <?php endif; ?>
                         
                         <?php if (!$success && !$tiene_solicitud): ?>
-                            <!-- Información del usuario -->
                             <div class="info-box mb-4">
                                 <h5 class="mb-3">
                                     <i class="fas fa-user me-2"></i>
@@ -393,11 +310,6 @@ if ($animal['imagen_url']) {
                                 </div>
                             </div>
                             
-<<<<<<< HEAD
-                            <!--Formulario-->
-=======
-                            <!-- Formulario -->
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
                             <form method="POST" action="">
                                 <div class="mb-3">
                                     <label for="motivacion" class="form-label">
@@ -453,11 +365,6 @@ if ($animal['imagen_url']) {
                                               placeholder="Indica qué otros animales tienes (especie, edad, sexo)..."><?= $_POST['otros_animales'] ?? '' ?></textarea>
                                 </div>
                                 
-<<<<<<< HEAD
-                                <!--Términos y condiciones-->
-=======
-                                <!-- Términos y condiciones -->
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
                                 <div class="card mb-4">
                                     <div class="card-header bg-light">
                                         <h6 class="mb-0">
@@ -488,11 +395,6 @@ if ($animal['imagen_url']) {
                                     </div>
                                 </div>
                                 
-<<<<<<< HEAD
-                                <!--Botones-->
-=======
-                                <!-- Botones -->
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
                                 <div class="d-grid gap-2">
                                     <button type="submit" class="btn btn-success btn-lg">
                                         <i class="fas fa-paper-plane me-2"></i>
@@ -508,11 +410,6 @@ if ($animal['imagen_url']) {
                     </div>
                 </div>
                 
-<<<<<<< HEAD
-                <!--Información adicional-->
-=======
-                <!-- Información adicional -->
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
                 <div class="card mt-4">
                     <div class="card-header bg-light">
                         <h6 class="mb-0">
@@ -559,11 +456,6 @@ if ($animal['imagen_url']) {
     <?php include '../includes/footer.php'; ?>
     
     <script>
-<<<<<<< HEAD
-        //Validación del formulario
-=======
-        // Validación del formulario
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.querySelector('form');
             if (form) {

@@ -1,71 +1,133 @@
 <?php
 require_once '../includes/config.php';
-//Manejo errores
+
+
+if (estaLogueado()) {
+    header('Location: ' . BASE_URL . '/perfil/');
+    exit();
+}
+
+
 $error = '';
 $success = '';
-//Verificación en post
+
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Recoger y sanitizar datos
-    $nombre = sanitizar($_POST['nombre'] ?? '');
-    $apellido = sanitizar($_POST['apellido'] ?? '');
-    $email = sanitizar($_POST['email'] ?? '');
-    $telefono = sanitizar($_POST['telefono'] ?? '');
-    $direccion = sanitizar($_POST['direccion'] ?? '');
+    
+    $nombre = trim($_POST['nombre'] ?? '');
+    $apellido = trim($_POST['apellido'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $telefono = trim($_POST['telefono'] ?? '');
+    $direccion = trim($_POST['direccion'] ?? '');
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
-    //Validaciones de todos los datos del formulario
+    
+    
+    $errores = [];
+    
+    
     if (empty($nombre)) {
-        $error = 'El nombre es obligatorio';
-    } elseif (empty($email)) {
-        $error = 'El email es obligatorio';
+        $errores[] = 'El nombre es obligatorio';
+    } elseif (strlen($nombre) < 2 || strlen($nombre) > 100) {
+        $errores[] = 'El nombre debe tener entre 2 y 100 caracteres';
+    } elseif (!preg_match('/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/', $nombre)) {
+        $errores[] = 'El nombre solo puede contener letras y espacios';
+    }
+    
+    
+    if (!empty($apellido) && !preg_match('/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/', $apellido)) {
+        $errores[] = 'El apellido solo puede contener letras y espacios';
+    }
+    
+   
+    if (empty($email)) {
+        $errores[] = 'El email es obligatorio';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = 'El email no es válido';
-    } elseif (empty($password)) {
-        $error = 'La contraseña es obligatoria';
+        $errores[] = 'El email no tiene un formato válido';
+    } elseif (strlen($email) > 150) {
+        $errores[] = 'El email no puede tener más de 150 caracteres';
+    }
+    
+    
+    if (!empty($telefono) && !preg_match('/^[0-9\s\+\-\(\)]{9,20}$/', $telefono)) {
+        $errores[] = 'El teléfono no tiene un formato válido';
+    }
+    
+    
+    if (!empty($direccion) && strlen($direccion) > 255) {
+        $errores[] = 'La dirección no puede tener más de 255 caracteres';
+    }
+    
+   
+    if (empty($password)) {
+        $errores[] = 'La contraseña es obligatoria';
     } elseif (strlen($password) < 6) {
-        $error = 'La contraseña debe tener al menos 6 caracteres';
+        $errores[] = 'La contraseña debe tener al menos 6 caracteres';
+    } elseif (!preg_match('/[A-Z]/', $password)) {
+        $errores[] = 'La contraseña debe contener al menos una mayúscula';
+    } elseif (!preg_match('/[0-9]/', $password)) {
+        $errores[] = 'La contraseña debe contener al menos un número';
     } elseif ($password !== $confirm_password) {
-        $error = 'Las contraseñas no coinciden';
-    } else {
+        $errores[] = 'Las contraseñas no coinciden';
+    }
+    
+    
+    if (!isset($_POST['terminos'])) {
+        $errores[] = 'Debes aceptar los términos y condiciones';
+    }
+    
+    
+    if (empty($errores)) {
         try {
-            //Verificar si el email ya existe con una query y manejar si el correo ya existe
+            
             $stmt = $pdo->prepare("SELECT id_usuario FROM usuarios WHERE email = ?");
             $stmt->execute([$email]);
+            
             if ($stmt->fetch()) {
                 $error = 'Este email ya está registrado';
             } else {
-                //Seguridad contraseña
+               
                 $password_hash = password_hash($password, PASSWORD_DEFAULT);
-                //Insertar nuevo usuario
+                
+               
                 $stmt = $pdo->prepare("
                     INSERT INTO usuarios (nombre, apellido, email, password_hash, telefono, direccion, id_rol, fecha_registro) 
                     VALUES (?, ?, ?, ?, ?, ?, 2, NOW())
                 ");
                 $stmt->execute([$nombre, $apellido, $email, $password_hash, $telefono, $direccion]);
-                //Obtener id del nuevo usuario
+                
+                
                 $user_id = $pdo->lastInsertId();
-                //Inicio de sesión automáticamente
+                
+                
                 $_SESSION['user_id'] = $user_id;
                 $_SESSION['user_name'] = $nombre;
                 $_SESSION['user_email'] = $email;
-                $_SESSION['user_rol'] = 2;
-                $_SESSION['usuario_id'] = $user_id;
-                $_SESSION['usuario_nombre'] = $nombre;
-                $_SESSION['usuario_rol'] = 2;
-                //Mensaje bienvenida
-                $success = '¡Registro exitoso! Bienvenido/a a AdoptaWeb.';
-                //Redirigir después de 3 segundos
+                $_SESSION['user_role'] = 2;
+                
+                
+                if (isset($_POST['newsletter'])) {
+                    try {
+                        $stmt = $pdo->prepare("INSERT INTO newsletter (email, fecha_registro, activo) VALUES (?, NOW(), 1)");
+                        $stmt->execute([$email]);
+                    } catch (PDOException $e) {
+                        
+                        error_log("Error al suscribir a newsletter: " . $e->getMessage());
+                    }
+                }
+                
+                $success = '¡Registro exitoso! Bienvenido/a a AdoptaWeb. Serás redirigido a tu perfil...';
+                
+              
                 header("refresh:3;url=" . BASE_URL . "/perfil/");
             }
         } catch (PDOException $e) {
-            $error = 'Error en el registro: ' . $e->getMessage();
+            error_log("Error en registro: " . $e->getMessage());
+            $error = 'Error en el registro. Por favor, inténtalo de nuevo más tarde.';
         }
+    } else {
+        $error = implode('<br>', $errores);
     }
-}
-//Si ya está logueado, redirigir
-if (estaLogueado()) {
-    header('Location: ' . BASE_URL . '/perfil/');
-    exit();
 }
 ?>
 <!DOCTYPE html>
@@ -76,7 +138,7 @@ if (estaLogueado()) {
     <title>Registro - AdoptaWeb</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="<?= BASE_URL ?>/css/style.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/css/styles.css">
     <style>
         .register-card {
             margin-top: 2rem;
@@ -89,8 +151,10 @@ if (estaLogueado()) {
             font-size: 0.85rem;
             color: #6c757d;
         }
-        .progress-bar {
-            background-color: #28a745;
+        .password-strength {
+            height: 5px;
+            margin-top: 5px;
+            border-radius: 3px;
         }
     </style>
 </head>
@@ -109,24 +173,27 @@ if (estaLogueado()) {
                         <?php if ($error): ?>
                             <div class="alert alert-danger alert-dismissible fade show">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
-                                <?= htmlspecialchars($error) ?>
+                                <?= $error ?>
                                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                             </div>
                         <?php endif; ?>
+                        
                         <?php if ($success): ?>
                             <div class="alert alert-success alert-dismissible fade show">
                                 <i class="fas fa-check-circle me-2"></i>
-                                <?= htmlspecialchars($success) ?>
+                                <?= $success ?>
                                 <p class="mb-0 mt-2">Serás redirigido a tu perfil en 3 segundos...</p>
                             </div>
                         <?php endif; ?>
-                        <form method="POST" action="" id="registerForm">
+                        
+                        <form method="POST" action="" id="registerForm" novalidate>
                             <div class="row">
-                                <!--Información personal-->
+                                
                                 <div class="col-md-6">
                                     <h5 class="mb-4 text-success">
                                         <i class="fas fa-user-circle me-2"></i>Información Personal
                                     </h5>
+                                    
                                     <div class="mb-3">
                                         <label for="nombre" class="form-label">
                                             <i class="fas fa-user form-icon me-1"></i>Nombre *
@@ -137,19 +204,29 @@ if (estaLogueado()) {
                                                name="nombre"
                                                value="<?= isset($_POST['nombre']) ? htmlspecialchars($_POST['nombre']) : '' ?>"
                                                required
+                                               pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{2,100}"
                                                placeholder="Tu nombre">
+                                        <div class="invalid-feedback">
+                                            El nombre debe tener entre 2 y 100 letras
+                                        </div>
                                     </div>
+                                    
                                     <div class="mb-3">
                                         <label for="apellido" class="form-label">
-                                            <i class="fas fa-user form-icon me-1"></i>Primer apellido
+                                            <i class="fas fa-user form-icon me-1"></i>Apellido
                                         </label>
                                         <input type="text" 
                                                class="form-control" 
                                                id="apellido" 
                                                name="apellido"
                                                value="<?= isset($_POST['apellido']) ? htmlspecialchars($_POST['apellido']) : '' ?>"
+                                               pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*"
                                                placeholder="Tu apellido">
+                                        <div class="invalid-feedback">
+                                            Solo se permiten letras y espacios
+                                        </div>
                                     </div>
+                                    
                                     <div class="mb-3">
                                         <label for="email" class="form-label">
                                             <i class="fas fa-envelope form-icon me-1"></i>Email *
@@ -160,8 +237,13 @@ if (estaLogueado()) {
                                                name="email"
                                                value="<?= isset($_POST['email']) ? htmlspecialchars($_POST['email']) : '' ?>"
                                                required
+                                               maxlength="150"
                                                placeholder="ejemplo@email.com">
+                                        <div class="invalid-feedback">
+                                            Por favor, introduce un email válido
+                                        </div>
                                     </div>
+                                    
                                     <div class="mb-3">
                                         <label for="telefono" class="form-label">
                                             <i class="fas fa-phone form-icon me-1"></i>Teléfono
@@ -171,14 +253,20 @@ if (estaLogueado()) {
                                                id="telefono" 
                                                name="telefono"
                                                value="<?= isset($_POST['telefono']) ? htmlspecialchars($_POST['telefono']) : '' ?>"
+                                               pattern="[0-9\s\+\-\(\)]{9,20}"
                                                placeholder="+34 600 123 456">
+                                        <div class="invalid-feedback">
+                                            Formato de teléfono no válido
+                                        </div>
                                     </div>
                                 </div>
-                                <!--Dirección y contraseña-->
+                                
+                           
                                 <div class="col-md-6">
                                     <h5 class="mb-4 text-success">
                                         <i class="fas fa-home me-2"></i>Dirección & Seguridad
                                     </h5>
+                                    
                                     <div class="mb-3">
                                         <label for="direccion" class="form-label">
                                             <i class="fas fa-map-marker-alt form-icon me-1"></i>Dirección
@@ -187,9 +275,11 @@ if (estaLogueado()) {
                                                   id="direccion" 
                                                   name="direccion"
                                                   rows="2"
+                                                  maxlength="255"
                                                   placeholder="Calle, número, ciudad, código postal"><?= isset($_POST['direccion']) ? htmlspecialchars($_POST['direccion']) : '' ?></textarea>
                                         <small class="text-muted">Necesaria para procesos de adopción</small>
                                     </div>
+                                    
                                     <div class="mb-3">
                                         <label for="password" class="form-label">
                                             <i class="fas fa-lock form-icon me-1"></i>Contraseña *
@@ -199,13 +289,15 @@ if (estaLogueado()) {
                                                id="password" 
                                                name="password"
                                                required
-                                               placeholder="Mínimo 6 caracteres"
-                                               minlength="6">
+                                               minlength="6"
+                                               placeholder="Mínimo 6 caracteres con mayúscula y número">
+                                        <div class="password-strength" id="passwordStrength"></div>
                                         <div class="password-requirements mt-1">
                                             <i class="fas fa-info-circle me-1"></i>
-                                            Mínimo 6 caracteres
+                                            Mínimo 6 caracteres, una mayúscula y un número
                                         </div>
                                     </div>
+                                    
                                     <div class="mb-4">
                                         <label for="confirm_password" class="form-label">
                                             <i class="fas fa-lock form-icon me-1"></i>Confirmar Contraseña *
@@ -216,32 +308,42 @@ if (estaLogueado()) {
                                                name="confirm_password"
                                                required
                                                placeholder="Repite tu contraseña">
+                                        <div class="invalid-feedback" id="passwordMatchFeedback">
+                                            Las contraseñas no coinciden
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <!--Términos y condiciones-->
+                            
+                      
                             <div class="mb-4">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="terminos" required>
+                                    <input class="form-check-input" type="checkbox" id="terminos" name="terminos" required>
                                     <label class="form-check-label" for="terminos">
                                         Acepto los 
-                                        <a href="<?= BASE_URL ?>/terminos" target="_blank" class="text-success">términos y condiciones</a> 
+                                        <a href="<?= BASE_URL ?>/terminos.php" target="_blank" class="text-success">términos y condiciones</a> 
                                         y la 
-                                        <a href="<?= BASE_URL ?>/privacidad" target="_blank" class="text-success">política de privacidad</a>
+                                        <a href="<?= BASE_URL ?>/privacidad.php" target="_blank" class="text-success">política de privacidad</a>
                                     </label>
+                                    <div class="invalid-feedback">
+                                        Debes aceptar los términos y condiciones
+                                    </div>
                                 </div>
+                                
                                 <div class="form-check mt-2">
-                                    <input class="form-check-input" type="checkbox" id="newsletter">
+                                    <input class="form-check-input" type="checkbox" id="newsletter" name="newsletter">
                                     <label class="form-check-label" for="newsletter">
                                         Deseo recibir noticias sobre adopciones y consejos para mascotas
                                     </label>
                                 </div>
                             </div>
-                            <!--Botones-->
+                            
+                          
                             <div class="d-grid gap-2">
                                 <button type="submit" class="btn btn-success btn-lg py-3">
                                     <i class="fas fa-user-plus me-2"></i>Crear Cuenta
                                 </button>
+                                
                                 <div class="text-center mt-3">
                                     <p class="mb-2">¿Ya tienes cuenta?</p>
                                     <a href="<?= BASE_URL ?>/auth/login.php" class="btn btn-outline-success">
@@ -258,51 +360,97 @@ if (estaLogueado()) {
     <?php include '../includes/footer.php'; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    //Validación de contraseña en tiempo real
-    document.getElementById('password').addEventListener('input', function() {
-        const password = this.value;
-        const requirements = document.querySelector('.password-requirements');  
-        if (password.length < 6) {
-            requirements.innerHTML = '<i class="fas fa-times text-danger me-1"></i> Mínimo 6 caracteres (actual: ' + password.length + ')';
-            requirements.classList.remove('text-success');
-            requirements.classList.add('text-danger');
-        } else {
-            requirements.innerHTML = '<i class="fas fa-check text-success me-1"></i> Contraseña válida (' + password.length + ' caracteres)';
-            requirements.classList.remove('text-danger');
-            requirements.classList.add('text-success');
+        
+        document.getElementById('password').addEventListener('input', function() {
+            const password = this.value;
+            const strengthBar = document.getElementById('passwordStrength');
+            const requirements = document.querySelector('.password-requirements');
+            
+            
+            let strength = 0;
+            if (password.length >= 6) strength += 25;
+            if (/[A-Z]/.test(password)) strength += 25;
+            if (/[0-9]/.test(password)) strength += 25;
+            if (/[^A-Za-z0-9]/.test(password)) strength += 25;
+            
+            
+            strengthBar.style.width = strength + '%';
+            
+           
+            if (strength < 50) {
+                strengthBar.style.backgroundColor = '#dc3545';
+                requirements.innerHTML = '<i class="fas fa-times text-danger me-1"></i> Contraseña débil';
+            } else if (strength < 75) {
+                strengthBar.style.backgroundColor = '#ffc107';
+                requirements.innerHTML = '<i class="fas fa-exclamation-triangle text-warning me-1"></i> Contraseña media';
+            } else {
+                strengthBar.style.backgroundColor = '#28a745';
+                requirements.innerHTML = '<i class="fas fa-check text-success me-1"></i> Contraseña fuerte';
+            }
+            
+         
+            const confirmPassword = document.getElementById('confirm_password').value;
+            if (confirmPassword !== '') {
+                validatePasswordMatch();
+            }
+        });
+        
+        
+        document.getElementById('confirm_password').addEventListener('input', validatePasswordMatch);
+        
+        function validatePasswordMatch() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const feedback = document.getElementById('passwordMatchFeedback');
+            
+            if (confirmPassword !== '' && password !== confirmPassword) {
+                document.getElementById('confirm_password').classList.add('is-invalid');
+                document.getElementById('confirm_password').classList.remove('is-valid');
+            } else if (confirmPassword !== '') {
+                document.getElementById('confirm_password').classList.add('is-valid');
+                document.getElementById('confirm_password').classList.remove('is-invalid');
+            }
         }
-    });
-    //Validación de confirmación de contraseña
-    document.getElementById('confirm_password').addEventListener('input', function() {
-        const password = document.getElementById('password').value;
-        const confirmPassword = this.value;  
-        if (confirmPassword !== '' && password !== confirmPassword) {
-            this.classList.add('is-invalid');
-            this.classList.remove('is-valid');
-        } else if (confirmPassword !== '') {
-            this.classList.add('is-valid');
-            this.classList.remove('is-invalid');
-        }
-    });
-    //Validación del formulario antes de enviar
-    document.getElementById('registerForm').addEventListener('submit', function(e) {
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirm_password').value;
-        const terminos = document.getElementById('terminos').checked;  
-        if (password !== confirmPassword) {
-            e.preventDefault();
-            alert('Las contraseñas no coinciden');
-            document.getElementById('confirm_password').focus();
-            return false;
-        }
-        if (!terminos) {
-            e.preventDefault();
-            alert('Debes aceptar los términos y condiciones');
-            document.getElementById('terminos').focus();
-            return false;
-        }
-        return true;
-    });
+        
+        
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            
+           
+            if (!/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+                e.preventDefault();
+                alert('La contraseña debe contener al menos una mayúscula y un número');
+                document.getElementById('password').focus();
+                return false;
+            }
+            
+          
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Las contraseñas no coinciden');
+                document.getElementById('confirm_password').focus();
+                return false;
+            }
+            
+            return true;
+        });
+        
+       
+        (function() {
+            'use strict'
+            var forms = document.querySelectorAll('#registerForm')
+            Array.prototype.slice.call(forms)
+                .forEach(function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                        }
+                        form.classList.add('was-validated')
+                    }, false)
+                })
+        })()
     </script>
 </body>
 </html>

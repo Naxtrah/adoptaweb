@@ -1,0 +1,165 @@
+
+document.addEventListener('DOMContentLoaded', function () {
+    const busqueda = document.getElementById('busqueda');
+    const especie = document.getElementById('especie');
+    const estado = document.getElementById('estado');
+    const centro = document.getElementById('centro');
+
+    let currentPage = 1;
+
+
+    function cargarAnimales(pagina = 1) {
+        currentPage = pagina;
+        const params = new URLSearchParams();
+        params.append('accion', 'buscar'); 
+        params.append('pagina', currentPage);
+        if (busqueda.value.trim()) params.append('busqueda', busqueda.value.trim());
+        if (especie.value) params.append('especie', especie.value);
+        if (estado.value) params.append('estado', estado.value);
+        if (centro.value) params.append('centro', centro.value);
+
+        fetch(`animales.php?${params.toString()}`)
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                return res.json();
+            })
+            .then(data => {
+                mostrarTabla(data.animales);
+                mostrarPaginacion(data.totalPaginas, currentPage);
+                document.getElementById('resultado-count').textContent = `Mostrando ${data.animales.length} de ${data.total}`;
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                document.getElementById('resultados-tabla').innerHTML = 
+                    '<div class="alert alert-danger">Error al cargar animales. Por favor, recarga la página.</div>';
+            });
+    }
+
+   
+    function mostrarTabla(animales) {
+        let html = '';
+        
+        if (animales.length === 0) {
+            html = '<div class="alert alert-info">No se encontraron animales con los filtros seleccionados.</div>';
+        } else {
+            html = '<table class="table table-hover"><thead class="table-light"><tr><th>ID</th><th>Imagen</th><th>Nombre</th><th>Especie/Raza</th><th>Edad/Sexo</th><th>Estado</th><th>Centro</th><th>Ingreso</th><th class="text-center">Acciones</th></tr></thead><tbody>';
+            
+            animales.forEach(a => {
+                const imagen = a.imagen_url ? '../' + a.imagen_url.replace('./', '') : '../img/animales/default.jpg';
+                const badgeClass = {
+                    'Disponible': 'badge-disponible',
+                    'Reservado': 'badge-reservado',
+                    'Adoptado': 'badge-adoptado',
+                    'En tratamiento': 'badge-tratamiento'
+                }[a.estado] || 'badge-secondary';
+                
+                html += `
+                    <tr>
+                        <td>${a.id_animal}</td>
+                        <td><img src="${imagen}" class="img-thumbnail" style="width:60px;height:60px;object-fit:cover;" onerror="this.src='../img/animales/default.jpg'" alt="${a.nombre}"></td>
+                        <td><strong>${a.nombre}</strong></td>
+                        <td><small class="text-muted">${a.especie}</small><br><small>${a.raza || 'Mestizo'}</small></td>
+                        <td>${a.edad} años<br><small>${a.sexo}</small></td>
+                        <td><span class="badge ${badgeClass}">${a.estado}</span></td>
+                        <td><small>${a.centro_nombre}</small></td>
+                        <td><small>${new Date(a.fecha_ingreso).toLocaleDateString('es-ES')}</small></td>
+                        <td class="text-center">
+                            <a href="../animales/ver.php?id=${a.id_animal}" class="btn btn-sm btn-info me-1" target="_blank" title="Ver"><i class="fas fa-eye"></i></a>
+                            <a href="animales.php?accion=editar&id=${a.id_animal}" class="btn btn-sm btn-warning me-1" title="Editar"><i class="fas fa-edit"></i></a>
+                            <form method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar este animal?')">
+                                <input type="hidden" name="id_animal" value="${a.id_animal}">
+                                <button type="submit" name="eliminar_animal" class="btn btn-sm btn-danger" title="Eliminar"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+        }
+        
+        document.getElementById('resultados-tabla').innerHTML = html;
+    }
+
+ 
+    function mostrarPaginacion(totalPaginas, paginaActual) {
+        const container = document.getElementById('paginacion-container');
+        const paginacion = document.getElementById('paginacion');
+        
+        if (totalPaginas <= 1) {
+            container.classList.add('d-none');
+            return;
+        }
+        
+        container.classList.remove('d-none');
+        paginacion.innerHTML = '';
+        
+   
+        if (paginaActual > 1) {
+            const li = document.createElement('li');
+            li.className = 'page-item';
+            const btn = document.createElement('button');
+            btn.className = 'page-link';
+            btn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            btn.addEventListener('click', () => {
+                cargarAnimales(paginaActual - 1);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+            li.appendChild(btn);
+            paginacion.appendChild(li);
+        }
+        
+   
+        const inicio = Math.max(1, paginaActual - 2);
+        const fin = Math.min(totalPaginas, inicio + 4);
+        
+        for (let i = inicio; i <= fin; i++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${i === paginaActual ? 'active' : ''}`;
+            const btn = document.createElement('button');
+            btn.className = 'page-link';
+            btn.textContent = i;
+            btn.addEventListener('click', () => {
+                cargarAnimales(i);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+            li.appendChild(btn);
+            paginacion.appendChild(li);
+        }
+        
+    
+        if (paginaActual < totalPaginas) {
+            const li = document.createElement('li');
+            li.className = 'page-item';
+            const btn = document.createElement('button');
+            btn.className = 'page-link';
+            btn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            btn.addEventListener('click', () => {
+                cargarAnimales(paginaActual + 1);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+            li.appendChild(btn);
+            paginacion.appendChild(li);
+        }
+    }
+
+  
+    if (busqueda && especie && estado && centro) {
+  
+        busqueda.addEventListener('input', () => cargarAnimales(1));
+        especie.addEventListener('change', () => cargarAnimales(1));
+        estado.addEventListener('change', () => cargarAnimales(1));
+        centro.addEventListener('change', () => cargarAnimales(1));
+
+       
+        cargarAnimales(1);
+    }
+});
+
+
+window.cargarAnimales = function(pagina = 1) {
+    const event = new Event('DOMContentLoaded');
+    document.dispatchEvent(event);
+};

@@ -2,6 +2,12 @@
 $usuario = obtenerUsuario();
 $script_name = $_SERVER['SCRIPT_NAME'];
 $pagina_actual = basename($script_name, '.php');
+
+if (estaLogueado() && !esAdmin()) {
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM adopciones_pagos WHERE id_usuario=? AND estado='Pendiente'");
+    $stmt->execute([$_SESSION['user_id']]);
+    $pendientes = $stmt->fetchColumn();
+}
 ?>
 <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow-sm">
     <div class="container">
@@ -53,29 +59,25 @@ $pagina_actual = basename($script_name, '.php');
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="dropdownUsuario" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <div class="avatar-circle bg-light text-success me-2"><i class="fas fa-user"></i></div>
                             <span><?= htmlspecialchars($usuario['nombre']) ?></span>
+                            <?php if ($pendientes): ?>
+                                <span class="badge bg-danger ms-2"><?= $pendientes ?></span>
+                            <?php endif; ?>
                         </a>
-                        <!--Navbar con sus distintos enlaces para conducir correctamente al usuario por el flujo
-                        de la página-->
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownUsuario">
-<<<<<<< HEAD
                             <li><a class="dropdown-item" href="<?= BASE_URL ?>/perfil/index.php"><i class="fas fa-user-circle me-2"></i>Mi Perfil</a></li>
                             <li><a class="dropdown-item" href="<?= BASE_URL ?>/perfil/mis-adopciones.php"><i class="fas fa-heart me-2"></i>Mis Adopciones</a></li>
                             <li><a class="dropdown-item" href="<?= BASE_URL ?>/perfil/mis-datos.php"><i class="fas fa-edit me-2"></i>Editar Perfil</a></li>
                             <li><a class="dropdown-item" href="<?= BASE_URL ?>/perfil/mis-pagos.php"><i class="fas fa-credit-card me-2"></i>Mis Pagos</a></li>
+                            <li><a class="dropdown-item" href="<?= BASE_URL ?>/perfil/pagos-pendientes.php">
+                                <i class="fas fa-bell me-2"></i>Pagos pendientes
+                                <?php if ($pendientes): ?>
+                                    <span class="badge bg-danger ms-2"><?= $pendientes ?></span>
+                                <?php endif; ?>
+                            </a></li>
                             <li><a class="dropdown-item" href="<?= BASE_URL ?>/perfil/cambiar-password.php"><i class="fas fa-lock me-2"></i>Cambiar Contraseña</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="<?= BASE_URL ?>/auth/logout.php"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
                         </ul>
-=======
-    <li><a class="dropdown-item" href="<?= BASE_URL ?>/perfil/index.php"><i class="fas fa-user-circle me-2"></i>Mi Perfil</a></li>
-    <li><a class="dropdown-item" href="<?= BASE_URL ?>/perfil/mis-adopciones.php"><i class="fas fa-heart me-2"></i>Mis Adopciones</a></li>
-    <li><a class="dropdown-item" href="<?= BASE_URL ?>/perfil/mis-datos.php"><i class="fas fa-edit me-2"></i>Editar Perfil</a></li>
-    <li><a class="dropdown-item" href="<?= BASE_URL ?>/perfil/mis-pagos.php"><i class="fas fa-credit-card me-2"></i>Mis Pagos</a></li>
-    <li><a class="dropdown-item" href="<?= BASE_URL ?>/perfil/cambiar-password.php"><i class="fas fa-lock me-2"></i>Cambiar Contraseña</a></li>
-    <li><hr class="dropdown-divider"></li>
-    <li><a class="dropdown-item text-danger" href="<?= BASE_URL ?>/auth/logout.php"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
-</ul>
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
                     </div>
                 <?php elseif (!estaLogueado()): ?>
                     <a class="btn btn-outline-light me-2" href="<?= BASE_URL ?>/auth/login.php">

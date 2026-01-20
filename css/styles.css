@@ -1,4 +1,3 @@
-/*Estilos realizados con deepseek*/
 :root {
     --primary-color: #28a745;
     --secondary-color: #218838;
@@ -9,15 +8,20 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
-/* Navbar */
+main {
+    flex: 1 0 auto;
+}
+
 .navbar-brand {
     font-size: 1.5rem;
     font-weight: bold;
 }
 
-/* Cards */
 .card {
     border-radius: 10px;
     border: 1px solid #dee2e6;
@@ -29,7 +33,6 @@ body {
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
-/* Botones */
 .btn-success {
     background-color: var(--primary-color);
     border-color: var(--primary-color);
@@ -45,25 +48,21 @@ body {
     color: white;
 }
 
-/* Badges */
 .badge {
     font-weight: 500;
     padding: 0.4em 0.8em;
 }
 
-/* Formularios */
 .form-control:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
 }
 
-/* Spinner */
 .spinner-border.text-success {
     width: 3rem;
     height: 3rem;
 }
 
-/* Animaciones */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -73,7 +72,6 @@ body {
     animation: fadeIn 0.5s ease-out;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
     .card {
         margin-bottom: 1rem;
@@ -84,17 +82,14 @@ body {
     }
 }
 
-/* Mapa */
 #mapa-centros {
     border-radius: 0 0 10px 10px;
 }
 
-/* Tablas */
 .table-hover tbody tr:hover {
     background-color: rgba(40, 167, 69, 0.05);
 }
 
-/* Iconos */
 .icon-circle {
     width: 40px;
     height: 40px;
@@ -104,12 +99,10 @@ body {
     justify-content: center;
 }
 
-/* Progress bars */
 .progress-bar {
     background-color: var(--primary-color);
 }
 
-/* Modal */
 .modal-content {
     border-radius: 10px;
     border: none;
@@ -121,9 +114,45 @@ body {
     border-radius: 10px 10px 0 0;
 }
 
-/* Footer */
 footer {
-    margin-top: auto;
-    background-color: var(--dark-bg);
-    color: white;
+    background-color: var(--dark-bg) !important;
+    color: white !important;
+    width: 100% !important;
+    margin-top: auto !important;
+}
+
+
+.bg-success.text-white.py-5 {
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+
+footer .container {
+    width: 100%;
+    max-width: 100%;
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+
+body.contacto-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+body.contacto-page .container:not(footer .container) {
+    flex: 1;
+}
+
+body.contacto-page footer {
+    width: 100% !important;
+    margin-top: auto !important;
+    background-color: var(--dark-bg) !important;
 }
