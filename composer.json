@@ -1,6 +1,15 @@
+<<<<<<< HEAD
 {
     "require": {
         "google/apiclient": "^2.19",
         "paypal/rest-api-sdk-php": "^1.14"
     }
 }
+=======
+{
+    "require": {
+        "google/apiclient": "^2.19",
+        "paypal/rest-api-sdk-php": "^1.14"
+    }
+}
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34

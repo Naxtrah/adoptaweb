@@ -5,6 +5,7 @@ $accion = $_GET['accion'] ?? 'listar';
 
 //paginación
 $pagina = intval($_GET['pagina'] ?? 1);
+<<<<<<< HEAD
 
 //Número de animales a mostrar por página
 $porPagina = 8;
@@ -14,6 +15,13 @@ if ($accion === 'filtros') {
     header('Content-Type: text/html');
     
     //Consultar datos para los filtros desde la base de datos
+=======
+$porPagina = 8;
+
+if ($accion === 'filtros') {
+    header('Content-Type: text/html');
+    
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
     $especies = $pdo->query("SELECT DISTINCT especie FROM animales WHERE especie IS NOT NULL")->fetchAll();
     $razas = $pdo->query("SELECT DISTINCT raza FROM animales WHERE raza IS NOT NULL AND raza != ''")->fetchAll();
     $centros = $pdo->query("SELECT id_centro, nombre FROM centros")->fetchAll();
@@ -31,7 +39,10 @@ if ($accion === 'filtros') {
     }
     echo '</div>';
     
+<<<<<<< HEAD
     //Filtro de sexo
+=======
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
     echo '<div class="mb-3">';
     echo '<label class="form-label fw-bold">Sexo</label>';
     echo '<div class="form-check">';
@@ -44,7 +55,10 @@ if ($accion === 'filtros') {
     echo '</div>';
     echo '</div>';
     
+<<<<<<< HEAD
     //Filtro de edad
+=======
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
     echo '<div class="mb-3">';
     echo '<label class="form-label fw-bold">Edad</label>';
     echo '<select class="form-select" name="edad_max">';
@@ -56,7 +70,10 @@ if ($accion === 'filtros') {
     echo '</select>';
     echo '</div>';
     
+<<<<<<< HEAD
     //Filtro de centro
+=======
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
     echo '<div class="mb-3">';
     echo '<label class="form-label fw-bold">Centro</label>';
     echo '<select class="form-select" name="centro">';
@@ -67,7 +84,10 @@ if ($accion === 'filtros') {
     echo '</select>';
     echo '</div>';
     
+<<<<<<< HEAD
     //Filtro de estado
+=======
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
     echo '<div class="mb-3">';
     echo '<label class="form-label fw-bold">Estado</label>';
     echo '<div class="form-check">';
@@ -89,6 +109,7 @@ if ($accion === 'filtros') {
     echo '</button>';
     
     echo '</form>';
+<<<<<<< HEAD
     exit; //Terminar ejecución después de enviar el HTML de filtros
 }
 
@@ -97,6 +118,14 @@ if ($accion === 'filtros') {
 header('Content-Type: application/json');
 
 //Consulta base para obtener animales
+=======
+    exit;
+}
+
+
+header('Content-Type: application/json');
+
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 $sql = "SELECT SQL_CALC_FOUND_ROWS a.*, c.nombre as centro_nombre 
         FROM animales a 
         LEFT JOIN centros c ON a.id_centro = c.id_centro 
@@ -106,9 +135,15 @@ $params = [];
 if (!empty($_GET['busqueda'])) {
     $sql .= " AND (a.nombre LIKE ? OR a.especie LIKE ? OR a.raza LIKE ?)";
     $searchTerm = '%' . $_GET['busqueda'] . '%';
+<<<<<<< HEAD
     $params[] = $searchTerm; 
     $params[] = $searchTerm; 
     $params[] = $searchTerm; 
+=======
+    $params[] = $searchTerm;
+    $params[] = $searchTerm;
+    $params[] = $searchTerm;
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 }
 
 if (!empty($_GET['especie'])) {
@@ -157,17 +192,23 @@ if (!empty($_GET['estado'])) {
     $sql .= " AND a.estado IN ('Disponible', 'Reservado')";
 }
 
+<<<<<<< HEAD
 //Ordenar por fecha de ingreso (más recientes primero)
 $sql .= " ORDER BY a.fecha_ingreso DESC";
 
 //Aplicar límites para paginación
 $offset = ($pagina - 1) * $porPagina;
 $sql .= " LIMIT $offset, $porPagina";
+=======
+$sql .= " ORDER BY a.fecha_ingreso DESC";
+$sql .= " LIMIT " . (($pagina - 1) * $porPagina) . ", $porPagina";
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $animales = $stmt->fetchAll();
 
+<<<<<<< HEAD
 foreach ($animales as &$animal) {
     //Verificar si tiene imagen y no es URL absoluta (http/https)
     if ($animal['imagen_url'] && !str_starts_with($animal['imagen_url'], 'http')) {
@@ -177,6 +218,14 @@ foreach ($animales as &$animal) {
             $animal['imagen_url'] = '../' . substr($animal['imagen_url'], 2);
         } elseif (!str_starts_with($animal['imagen_url'], '../')) {
             //Si no tiene prefijo, asumir que está en img/animales/
+=======
+
+foreach ($animales as &$animal) {
+    if ($animal['imagen_url'] && !str_starts_with($animal['imagen_url'], 'http')) {
+        if (str_starts_with($animal['imagen_url'], './img/')) {
+            $animal['imagen_url'] = '../' . substr($animal['imagen_url'], 2);
+        } elseif (!str_starts_with($animal['imagen_url'], '../')) {
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
             $animal['imagen_url'] = '../img/animales/' . basename($animal['imagen_url']);
         }
     }
@@ -188,9 +237,17 @@ $total = $totalStmt->fetchColumn(); // Total de animales que cumplen filtros
 $totalPaginas = ceil($total / $porPagina);
 
 echo json_encode([
+<<<<<<< HEAD
     'animales' => $animales,          
     'total' => $total,                
     'totalPaginas' => $totalPaginas,  
     'paginaActual' => $pagina        
 ]);
 ?>
+=======
+    'animales' => $animales,
+    'total' => $total,
+    'totalPaginas' => $totalPaginas,
+    'paginaActual' => $pagina
+]);
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34

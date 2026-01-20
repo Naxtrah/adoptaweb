@@ -12,7 +12,11 @@ if (!$user) {
     exit();
 }
 
+<<<<<<< HEAD
 //Estadísticas de adopciones
+=======
+// Estadísticas de adopciones
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 $adopciones = $pdo->prepare("
     SELECT COUNT(*) as total,
            SUM(CASE WHEN estado = 'Aprobada' THEN 1 ELSE 0 END) as aprobadas,
@@ -23,7 +27,11 @@ $adopciones = $pdo->prepare("
 $adopciones->execute([$_SESSION['user_id']]);
 $stats = $adopciones->fetch();
 
+<<<<<<< HEAD
 //Últimas adopciones
+=======
+// Últimas adopciones
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 $ultimas = $pdo->prepare("
     SELECT a.*, an.nombre as animal_nombre, an.especie, c.nombre as centro_nombre
     FROM adopciones a
@@ -54,7 +62,11 @@ $ultimas->execute([$_SESSION['user_id']]);
                 <?php include 'menu-lateral.php'; ?>
             </div>
 
+<<<<<<< HEAD
             <!--Contenido principal-->
+=======
+            <!-- Contenido principal -->
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
             <div class="col-md-9">
                 <div class="card">
                     <div class="card-header bg-light">
@@ -87,7 +99,11 @@ $ultimas->execute([$_SESSION['user_id']]);
                                 </div>
                             </div>
                         </div>
+<<<<<<< HEAD
                         <!--Ultimas solicitudes usuario-->
+=======
+
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
                         <h5 class="mb-3">Mis últimas solicitudes</h5>
                         <?php if ($ultimas->rowCount() > 0): ?>
                             <div class="table-responsive">
@@ -98,6 +114,10 @@ $ultimas->execute([$_SESSION['user_id']]);
                                             <th>Centro</th>
                                             <th>Fecha solicitud</th>
                                             <th>Estado</th>
+<<<<<<< HEAD
+=======
+                                    
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
                                         </tr>
                                     </thead>
                                     <tbody>

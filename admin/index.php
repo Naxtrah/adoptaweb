@@ -4,7 +4,11 @@ if (!estaLogueado() || !esAdmin()) {
     header('Location: ' . BASE_URL . '/index.php');
     exit();
 }
+<<<<<<< HEAD
 //Stats de la página
+=======
+
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 $stats = [
     'total_animales' => $pdo->query("SELECT COUNT(*) FROM animales")->fetchColumn(),
     'animales_disponibles' => $pdo->query("SELECT COUNT(*) FROM animales WHERE estado = 'Disponible'")->fetchColumn(),
@@ -69,7 +73,10 @@ $pendientes = $pdo->query("
     </div>
 </div>
 <script>
+<<<<<<< HEAD
 /*Inserción de todos los datos obtenidos con json*/
+=======
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 const ctx = document.getElementById('adopcionesChart').getContext('2d');
 new Chart(ctx, {
     type: 'line',

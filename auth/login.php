@@ -4,15 +4,26 @@ require_once '../includes/config.php';
 $error = '';
 $success = '';
 
+<<<<<<< HEAD
 //Verificación formulario + sanitizar
+=======
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = sanitizar($_POST['email']); 
     $password = $_POST['password'];
+<<<<<<< HEAD
     //Consulta para buscar usuario por correo
     $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE email = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch(); 
     //Verificar si hay resultado de la consulta
+=======
+
+    $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE email = ?");
+    $stmt->execute([$email]);
+    $user = $stmt->fetch();
+
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
     if ($user) {
         if ($password === 'demo123' || password_verify($password, $user['password_hash'])) {
             $_SESSION['user_id'] = $user['id_usuario'];
@@ -20,10 +31,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_SESSION['user_email'] = $user['email'];
             $_SESSION['user_role'] = $user['id_rol'];
 
+<<<<<<< HEAD
             // Obtener URL de redirección
             $redirect = isset($_GET['redirect']) ? $_GET['redirect'] : '';
 
             // Redirigir según el rol del usuario
+=======
+            $redirect = isset($_GET['redirect']) ? $_GET['redirect'] : '';
+
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
             if ((int)$user['id_rol'] === 1) {
                 header('Location: ' . BASE_URL . '/admin/index.php');
                 exit();
@@ -104,15 +120,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                     <i class="fas fa-sign-in-alt me-2"></i>Entrar
                                 </button>
                             </div>
+<<<<<<< HEAD
                             
                             <!--Botón de login con Google-->
                             <div class="d-grid mb-3">
+=======
+                                                        <div class="d-grid mb-3">
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
                                 <a href="<?= BASE_URL ?>/auth/google-login.php" class="btn btn-outline-danger">
                                     <i class="fab fa-google me-2"></i>Iniciar sesión con Google
                                 </a>
                             </div>
+<<<<<<< HEAD
                             
                             <!--Enlaces de registro y recuperación-->
+=======
+                            <hr>
+
+
+>>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
                             <div class="text-center">
                                 <p class="mb-2">
                                     ¿No tienes cuenta? 
