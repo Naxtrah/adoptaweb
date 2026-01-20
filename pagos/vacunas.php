@@ -39,7 +39,16 @@ $vacunas = $pdo->prepare("
 ");
 $vacunas->execute([$pago['id_animal']]);
 $vacunas_lista = $vacunas->fetchAll();
-$total = array_sum(array_column($vacunas_lista, 'precio'));
+
+$total_vacunas = array_sum(array_column($vacunas_lista, 'precio'));
+
+$monto_a_pagar = $pago['monto'];
+
+if ($monto_a_pagar != $total_vacunas) {
+    $stmt = $pdo->prepare("UPDATE adopciones_pagos SET monto = ? WHERE token_pago = ?");
+    $stmt->execute([$total_vacunas, $token]);
+    $monto_a_pagar = $total_vacunas;
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -79,7 +88,7 @@ $total = array_sum(array_column($vacunas_lista, 'precio'));
                         </div>
                         <div class="d-flex justify-content-between border-top pt-2">
                             <span class="fw-bold">Total a pagar:</span>
-                            <strong class="text-success fs-5"><?= number_format($total, 2) ?> €</strong>
+                            <strong class="text-success fs-5"><?= number_format($monto_a_pagar, 2) ?> €</strong>
                         </div>
                     </div>
 

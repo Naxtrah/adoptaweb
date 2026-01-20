@@ -3,42 +3,37 @@ require_once '../includes/config.php';
 if (!estaLogueado()) redirect(BASE_URL.'/auth/login.php');
 
 $token = $_GET['token'] ?? '';
-if (!$token) {
-    $_SESSION['error'] = "Token de pago no válido";
+$id_pago = $_GET['id_pago'] ?? 0;
+
+if (!$token || !$id_pago) {
+    $_SESSION['error'] = "Datos de pago incompletos";
     header('Location: ' . BASE_URL . '/perfil/pagos-pendientes.php');
     exit();
 }
 
-
 $stmt = $pdo->prepare("
     SELECT 
         ap.*,
+        p.id_pago,
+        p.monto as pago_monto,
+        p.concepto as pago_concepto,
+        p.fecha_pago as fecha_pago_real,
+        p.metodo_pago,
         f.numero_factura,
         f.fecha_emision,
         f.pdf_dirr,
         an.nombre AS animal_nombre,
-        a.id_adopcion,
-        p.id_pago,
-        p.monto,
-        p.fecha_pago AS fecha_pago_real
+        a.id_adopcion
     FROM adopciones_pagos ap
     JOIN adopciones a ON ap.id_adopcion = a.id_adopcion
     JOIN animales an ON a.id_animal = an.id_animal
-    LEFT JOIN pagos p ON p.id_usuario = ap.id_usuario 
-        AND p.fecha_pago = (
-            SELECT MAX(fecha_pago) 
-            FROM pagos 
-            WHERE id_usuario = ap.id_usuario 
-            AND DATE(fecha_pago) = DATE(ap.fecha_pago)
-        )
+    JOIN pagos p ON p.id_pago = ?
     LEFT JOIN facturas f ON f.id_pago = p.id_pago
     WHERE ap.token_pago = ? 
         AND ap.estado = 'Pagado' 
         AND ap.id_usuario = ?
-    ORDER BY p.fecha_pago DESC
-    LIMIT 1
 ");
-$stmt->execute([$token, $_SESSION['user_id']]);
+$stmt->execute([$id_pago, $token, $_SESSION['user_id']]);
 $pago = $stmt->fetch();
 
 if (!$pago) {
@@ -46,7 +41,6 @@ if (!$pago) {
     header('Location: ' . BASE_URL . '/perfil/pagos-pendientes.php');
     exit();
 }
-
 
 $vacunas = $pdo->prepare("
     SELECT v.nombre, v.precio 
@@ -56,12 +50,13 @@ $vacunas = $pdo->prepare("
 ");
 $vacunas->execute([$pago['id_animal']]);
 $vacunas_lista = $vacunas->fetchAll();
-$total = array_sum(array_column($vacunas_lista, 'precio'));
 
+$total_vacunas = array_sum(array_column($vacunas_lista, 'precio'));
+$monto_pagado = $pago['pago_monto'] ?? $pago['monto'];
 
-if (!$pago['numero_factura'] && $pago['id_pago']) {
+if (!$pago['numero_factura']) {
     $concepto = 'Vacunas de ' . $pago['animal_nombre'];
-    $numero_factura = 'FAC-' . date('Y') . '-' . str_pad($pago['id_pago'], 5, '0', STR_PAD_LEFT);
+    $numero_factura = 'FAC-' . date('Y') . '-' . str_pad($id_pago, 5, '0', STR_PAD_LEFT);
     $pdfDir = __DIR__ . '/../facturas';
     if (!is_dir($pdfDir)) mkdir($pdfDir, 0755, true);
     $pdfFile = $pdfDir . '/' . $numero_factura . '.pdf';
@@ -72,16 +67,15 @@ if (!$pago['numero_factura'] && $pago['id_pago']) {
         'fecha' => date('d/m/Y'),
         'cliente' => $_SESSION['user_name'] ?? 'Usuario',
         'concepto' => $concepto,
-        'monto' => number_format($total, 2),
+        'monto' => number_format($monto_pagado, 2),
         'vacunas' => $vacunas_lista
     ];
     
     generarPDFFactura($datos, $pdfFile);
 
     $stmt = $pdo->prepare("INSERT INTO facturas (id_pago, numero_factura, fecha_emision, pdf_dirr) VALUES (?, ?, NOW(), ?)");
-    $stmt->execute([$pago['id_pago'], $numero_factura, $numero_factura . '.pdf']);
+    $stmt->execute([$id_pago, $numero_factura, $numero_factura . '.pdf']);
     
-   
     $pago['numero_factura'] = $numero_factura;
     $pago['pdf_dirr'] = $numero_factura . '.pdf';
     $pago['fecha_emision'] = date('Y-m-d H:i:s');
@@ -124,6 +118,7 @@ if (!$pago['numero_factura'] && $pago['id_pago']) {
                                     <p><strong>Animal adoptado:</strong> <?= htmlspecialchars($pago['animal_nombre']) ?></p>
                                     <p><strong>Fecha de pago:</strong> <?= date('d/m/Y H:i', strtotime($pago['fecha_pago_real'] ?? $pago['fecha_pago'])) ?></p>
                                     <p><strong>Número de adopción:</strong> ADOP-<?= str_pad($pago['id_adopcion'], 4, '0', STR_PAD_LEFT) ?></p>
+                                    <p><strong>Método de pago:</strong> <?= htmlspecialchars($pago['metodo_pago']) ?></p>
                                     <hr>
                                     <h6>Vacunas incluidas:</h6>
                                     <ul class="list-unstyled">
@@ -131,7 +126,7 @@ if (!$pago['numero_factura'] && $pago['id_pago']) {
                                             <li>• <?= htmlspecialchars($v['nombre']) ?> - <?= number_format($v['precio'], 2) ?> €</li>
                                         <?php endforeach; ?>
                                     </ul>
-                                    <p class="fw-bold mt-3">Total pagado: <span class="text-success"><?= number_format($total, 2) ?> €</span></p>
+                                    <p class="fw-bold mt-3">Total pagado: <span class="text-success"><?= number_format($monto_pagado, 2) ?> €</span></p>
                                 </div>
                             </div>
                         </div>
@@ -151,14 +146,14 @@ if (!$pago['numero_factura'] && $pago['id_pago']) {
                                             Tu factura ha sido generada y está disponible para descarga.
                                         </div>
                                         
-                                       <div class="d-grid gap-2">
-                                        <?php if ($pago['pdf_dirr']): ?>
-                                            <a href="<?= BASE_URL ?>/facturas/descargar.php?f=<?= urlencode($pago['pdf_dirr']) ?>" 
-                                            class="btn btn-primary">
-                                                <i class="fas fa-download me-2"></i>Descargar factura PDF
-                                            </a>
-                                        <?php endif; ?>
-                                    </div>
+                                        <div class="d-grid gap-2">
+                                            <?php if ($pago['pdf_dirr']): ?>
+                                                <a href="<?= BASE_URL ?>/facturas/descargar.php?f=<?= urlencode($pago['pdf_dirr']) ?>" 
+                                                   class="btn btn-primary">
+                                                    <i class="fas fa-download me-2"></i>Descargar factura PDF
+                                                </a>
+                                            <?php endif; ?>
+                                        </div>
                                     <?php else: ?>
                                         <div class="alert alert-warning">
                                             <i class="fas fa-exclamation-triangle me-2"></i>

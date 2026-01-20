@@ -14,7 +14,8 @@ try {
                 ap.token_pago,
                 a.estado AS estado_adopcion,
                 COALESCE(an.nombre,'Sin nombre') AS animal_nombre,
-                COALESCE(c.nombre,'Centro no especificado') AS centro_nombre
+                COALESCE(c.nombre,'Centro no especificado') AS centro_nombre,
+                an.id_animal
             FROM adopciones_pagos ap
             LEFT JOIN adopciones a ON ap.id_adopcion = a.id_adopcion
             LEFT JOIN animales an ON a.id_animal = an.id_animal
@@ -25,8 +26,29 @@ try {
     $stmt->execute([$user_id]);
     $pendientes = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
+   
+    foreach ($pendientes as &$pago) {
+        $stmt = $pdo->prepare("
+            SELECT COALESCE(SUM(v.precio), 0) as total_vacunas
+            FROM animal_vacunas av 
+            JOIN vacunas v ON av.id_vacuna = v.id_vacuna 
+            WHERE av.id_animal = ?
+        ");
+        $stmt->execute([$pago['id_animal']]);
+        $total_vacunas = $stmt->fetchColumn();
+        
+        
+        if ($pago['monto'] != $total_vacunas) {
+            $updateStmt = $pdo->prepare("UPDATE adopciones_pagos SET monto = ? WHERE id = ?");
+            $updateStmt->execute([$total_vacunas, $pago['id']]);
+            $pago['monto'] = $total_vacunas;
+        }
+    }
+    unset($pago);
+
 } catch (Exception $e) {
     $pendientes = [];
+    $errorMensaje = $e->getMessage();
 }
 
 $numPendientes = count($pendientes);
@@ -68,20 +90,21 @@ $numPendientes = count($pendientes);
 <?php
 $stmt = $pdo->prepare("
     SELECT 
-    ap.id,
-    ap.monto,
-    ap.token_pago,
-    a.estado AS estado_adopcion,
-    COALESCE(an.nombre,'Sin nombre') AS animal_nombre,
-    COALESCE(c.nombre,'Centro no especificado') AS centro_nombre
-FROM adopciones_pagos ap
-JOIN adopciones a ON ap.id_adopcion = a.id_adopcion
-LEFT JOIN animales an ON a.id_animal = an.id_animal
-LEFT JOIN centros c ON an.id_centro = c.id_centro
-WHERE ap.id_usuario = ? 
-  AND ap.estado = 'Pendiente' 
-  AND a.estado = 'Aprobada'
-ORDER BY ap.id DESC
+        ap.id,
+        ap.monto,
+        ap.token_pago,
+        a.estado AS estado_adopcion,
+        COALESCE(an.nombre,'Sin nombre') AS animal_nombre,
+        COALESCE(c.nombre,'Centro no especificado') AS centro_nombre,
+        an.id_animal
+    FROM adopciones_pagos ap
+    JOIN adopciones a ON ap.id_adopcion = a.id_adopcion
+    LEFT JOIN animales an ON a.id_animal = an.id_animal
+    LEFT JOIN centros c ON an.id_centro = c.id_centro
+    WHERE ap.id_usuario = ? 
+      AND ap.estado = 'Pendiente' 
+      AND a.estado = 'Aprobada'
+    ORDER BY ap.id DESC
 ");
 $stmt->execute([$_SESSION['user_id']]);
 $filas = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -90,6 +113,23 @@ if (!is_array($filas)) $filas = [];
 
 $html = '';
 foreach ($filas as $i => $p) {
+ 
+    $stmtVacunas = $pdo->prepare("
+        SELECT COALESCE(SUM(v.precio), 0) as total_vacunas
+        FROM animal_vacunas av 
+        JOIN vacunas v ON av.id_vacuna = v.id_vacuna 
+        WHERE av.id_animal = ?
+    ");
+    $stmtVacunas->execute([$p['id_animal']]);
+    $monto_real = $stmtVacunas->fetchColumn();
+    
+    
+    if ($p['monto'] != $monto_real) {
+        $updateStmt = $pdo->prepare("UPDATE adopciones_pagos SET monto = ? WHERE id = ?");
+        $updateStmt->execute([$monto_real, $p['id']]);
+        $p['monto'] = $monto_real;
+    }
+    
     $html .= '
     <tr>
         <td>' . ($i + 1) . '</td>
