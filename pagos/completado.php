@@ -151,14 +151,14 @@ if (!$pago['numero_factura'] && $pago['id_pago']) {
                                             Tu factura ha sido generada y está disponible para descarga.
                                         </div>
                                         
-                                        <div class="d-grid gap-2">
-                                            <?php if ($pago['pdf_dirr']): ?>
-                                                <a href="<?= BASE_URL ?>/facturas/descargar.php?f=<?= urlencode($pago['pdf_dirr']) ?>" 
-                                                   class="btn btn-primary" target="_blank">
-                                                    <i class="fas fa-download me-2"></i>Descargar factura PDF
-                                                </a>
-                                            <?php endif; ?>
-                                        </div>
+                                       <div class="d-grid gap-2">
+                                        <?php if ($pago['pdf_dirr']): ?>
+                                            <a href="<?= BASE_URL ?>/facturas/descargar.php?f=<?= urlencode($pago['pdf_dirr']) ?>" 
+                                            class="btn btn-primary">
+                                                <i class="fas fa-download me-2"></i>Descargar factura PDF
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
                                     <?php else: ?>
                                         <div class="alert alert-warning">
                                             <i class="fas fa-exclamation-triangle me-2"></i>

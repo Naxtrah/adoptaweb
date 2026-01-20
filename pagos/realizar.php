@@ -41,13 +41,11 @@ $vacunas->execute([$pago['id_animal']]);
 $vacunas_lista = $vacunas->fetchAll();
 $total = array_sum(array_column($vacunas_lista, 'precio'));
 
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_pago'])) {
     $metodo = $_POST['metodo_pago'] ?? '';
     $valido = true;
     $errores = [];
 
-    
     switch ($metodo) {
         case 'tarjeta':
             $numero = str_replace(' ', '', $_POST['tarjeta_numero'] ?? '');
@@ -60,12 +58,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_pago'])) {
                 $valido = false;
             }
             
-          
             if (empty($fecha) || !preg_match('/^(0[1-9]|1[0-2])\/\d{2}$/', $fecha)) {
                 $errores[] = 'Formato de fecha inválido (MM/YY)';
                 $valido = false;
             } else {
-                
                 list($mes, $ano) = explode('/', $fecha);
                 $ano_completo = 2000 + intval($ano);
                 $fecha_actual = new DateTime();
@@ -128,21 +124,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_pago'])) {
     }
 
     if ($valido) {
-        
         $exito = mt_rand(1, 100) <= 80;
         
         if ($exito) {
-           
             try {
                 $pdo->beginTransaction();
 
-               
-                $stmt = $pdo->prepare("UPDATE adopciones_pagos SET estado = 'Pagado', fecha_pago = NOW() WHERE token_pago = ?");
-                $stmt->execute([$token]);
+                $stmt = $pdo->prepare("UPDATE adopciones_pagos SET estado = 'Pagado', fecha_pago = NOW(), monto = ? WHERE token_pago = ?");
+                $stmt->execute([$total, $token]);
 
                 $concepto = 'Vacunas de ' . $pago['animal_nombre'];
 
-               
                 $stmt = $pdo->prepare("
                     INSERT INTO pagos (id_usuario, id_centro, monto, concepto, metodo_pago, fecha_pago)
                     SELECT 
@@ -160,17 +152,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_pago'])) {
                 $stmt->execute([$total, $concepto, ucfirst($metodo), $token]);
                 $id_pago = $pdo->lastInsertId();
 
-                
                 foreach ($vacunas_lista as $v) {
                     $stmt = $pdo->prepare("INSERT INTO pagos_detalle (id_pago, id_animal, id_vacuna, cantidad, precio_unitario) VALUES (?, ?, ?, 1, ?)");
                     $stmt->execute([$id_pago, $pago['id_animal'], $v['id_vacuna'], $v['precio']]);
                 }
 
-               
                 $stmt = $pdo->prepare("UPDATE animales SET estado = 'Adoptado' WHERE id_animal = ?");
                 $stmt->execute([$pago['id_animal']]);
 
-               
                 $numero_factura = 'FAC-' . date('Y') . '-' . str_pad($id_pago, 5, '0', STR_PAD_LEFT);
                 $pdfDir = __DIR__ . '/../facturas';
                 if (!is_dir($pdfDir)) mkdir($pdfDir, 0755, true);
@@ -187,13 +176,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_pago'])) {
                 ];
                 generarPDFFactura($datos, $pdfFile);
 
-                
                 $stmt = $pdo->prepare("INSERT INTO facturas (id_pago, numero_factura, fecha_emision, pdf_dirr) VALUES (?, ?, NOW(), ?)");
                 $stmt->execute([$id_pago, $numero_factura, $numero_factura . '.pdf']);
 
                 $pdo->commit();
 
-               
                 header('Location: ' . BASE_URL . '/pagos/completado.php?token=' . $token);
                 exit();
 
@@ -203,7 +190,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_pago'])) {
                 $valido = false;
             }
         } else {
-            
             header('Location: ' . BASE_URL . '/pagos/cancelado.php?token=' . $token . '&error=simulado');
             exit();
         }
@@ -213,7 +199,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_pago'])) {
         $_SESSION['error'] = implode('<br>', $errores);
     }
 }
-
 
 $metodo_actual = $_POST['metodo_pago'] ?? 'tarjeta';
 ?>
@@ -254,20 +239,16 @@ $metodo_actual = $_POST['metodo_pago'] ?? 'tarjeta';
         }
         
         function showPaymentMethod(method) {
-            
             document.querySelectorAll('.payment-form').forEach(form => {
                 form.style.display = 'none';
-               
                 form.querySelectorAll('[required]').forEach(field => {
                     field.removeAttribute('required');
                 });
             });
             
-            
             const formToShow = document.getElementById(method + '-form');
             if (formToShow) {
                 formToShow.style.display = 'block';
-               
                 formToShow.querySelectorAll('input').forEach(field => {
                     field.setAttribute('required', 'required');
                 });
@@ -342,10 +323,8 @@ $metodo_actual = $_POST['metodo_pago'] ?? 'tarjeta';
             return true;
         }
         
-      
         document.addEventListener('DOMContentLoaded', function() {
             showPaymentMethod('<?= $metodo_actual ?>');
-            
             
             const form = document.querySelector('form');
             form.addEventListener('submit', function(e) {
@@ -353,7 +332,6 @@ $metodo_actual = $_POST['metodo_pago'] ?? 'tarjeta';
                     e.preventDefault();
                 }
             });
-            
             
             document.querySelectorAll('input[name="metodo_pago"]').forEach(radio => {
                 radio.addEventListener('change', function() {
@@ -374,7 +352,6 @@ $metodo_actual = $_POST['metodo_pago'] ?? 'tarjeta';
                     <h4><i class="fas fa-credit-card me-2"></i>Realizar Pago</h4>
                 </div>
                 <div class="card-body">
-                    
                     <div class="alert alert-info mb-4">
                         <h5>Resumen del pago</h5>
                         <p class="mb-1"><strong>Animal:</strong> <?= htmlspecialchars($pago['animal_nombre']) ?></p>
@@ -390,7 +367,6 @@ $metodo_actual = $_POST['metodo_pago'] ?? 'tarjeta';
                     <?php endif; ?>
 
                     <form method="POST" action="" novalidate>
-                       
                         <div class="mb-4">
                             <h5 class="mb-3">Selecciona método de pago:</h5>
                             <div class="row">
@@ -427,7 +403,6 @@ $metodo_actual = $_POST['metodo_pago'] ?? 'tarjeta';
                             </div>
                         </div>
 
-                       
                         <div id="tarjeta-form" class="payment-form border rounded p-4 mb-4">
                             <h5 class="mb-3"><i class="fas fa-credit-card me-2"></i>Datos de la tarjeta</h5>
                             <div class="row">
@@ -459,7 +434,6 @@ $metodo_actual = $_POST['metodo_pago'] ?? 'tarjeta';
                             </div>
                         </div>
 
-                       
                         <div id="paypal-form" class="payment-form border rounded p-4 mb-4" style="display: none;">
                             <h5 class="mb-3"><i class="fab fa-paypal me-2"></i>Iniciar sesión en PayPal</h5>
                             <div class="alert alert-warning">
@@ -478,7 +452,6 @@ $metodo_actual = $_POST['metodo_pago'] ?? 'tarjeta';
                             </div>
                         </div>
 
-                        
                         <div id="transferencia-form" class="payment-form border rounded p-4 mb-4" style="display: none;">
                             <h5 class="mb-3"><i class="fas fa-university me-2"></i>Datos de transferencia</h5>
                             <div class="alert alert-info">
@@ -487,8 +460,8 @@ $metodo_actual = $_POST['metodo_pago'] ?? 'tarjeta';
                             </div>
                             <div class="mb-3">
                                 <label for="transferencia_titular" class="form-label">Titular de la cuenta *</label>
-                                <input type="text" class="form-control" id="transferencia_titular" name="transferencia_titular" 
-                                       value="<?= htmlspecialchars($_POST['transferencia_titular'] ?? '') ?>">
+                                    <input type="text" class="form-control" id="transferencia_titular" name="transferencia_titular" 
+                                           value="<?= htmlspecialchars($_POST['transferencia_titular'] ?? '') ?>">
                             </div>
                             <div class="mb-3">
                                 <label for="transferencia_cuenta" class="form-label">Número de cuenta (IBAN) *</label>
@@ -500,7 +473,6 @@ $metodo_actual = $_POST['metodo_pago'] ?? 'tarjeta';
                             </div>
                         </div>
 
-                        
                         <div class="d-grid gap-2">
                             <button type="submit" name="procesar_pago" class="btn btn-success btn-lg">
                                 <i class="fas fa-lock me-2"></i>Pagar <?= number_format($total, 2) ?> €
