@@ -181,7 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['procesar_pago'])) {
 
                 $pdo->commit();
 
-                header('Location: ' . BASE_URL . '/pagos/completado.php?token=' . $token);
+               header('Location: ' . BASE_URL . '/pagos/completado.php?token=' . $token . '&id_pago=' . $id_pago);
                 exit();
 
             } catch (Exception $e) {
