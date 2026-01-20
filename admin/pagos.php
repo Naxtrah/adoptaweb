@@ -5,7 +5,6 @@ if (!estaLogueado() || !esAdmin()) {
     exit();
 }
 
-
 $pagos = $pdo->query("
     SELECT 
         ap.*, 
@@ -20,20 +19,20 @@ $pagos = $pdo->query("
         f.numero_factura,
         f.pdf_dirr,
         f.fecha_emision,
-        -- Calcular total de vacunas directamente en la consulta
-        (SELECT SUM(v.precio) 
-         FROM animal_vacunas av 
-         JOIN vacunas v ON av.id_vacuna = v.id_vacuna 
-         WHERE av.id_animal = an.id_animal) as total_vacunas_calculado
+        p.id_pago,
+        p.monto as pago_monto,
+        p.concepto as pago_concepto,
+        p.fecha_pago as pago_fecha
     FROM adopciones_pagos ap
     JOIN usuarios u ON ap.id_usuario = u.id_usuario
     JOIN adopciones a ON ap.id_adopcion = a.id_adopcion
     JOIN animales an ON a.id_animal = an.id_animal
     JOIN centros c ON an.id_centro = c.id_centro
-    LEFT JOIN facturas f ON f.id_pago = ap.id
+    LEFT JOIN pagos p ON p.id_usuario = ap.id_usuario 
+        AND DATE(p.fecha_pago) = DATE(ap.fecha_pago)
+    LEFT JOIN facturas f ON f.id_pago = p.id_pago
     ORDER BY ap.fecha_creacion DESC
 ")->fetchAll();
-
 
 foreach ($pagos as &$pago) {
     $stmt = $pdo->prepare("
@@ -51,18 +50,16 @@ foreach ($pagos as &$pago) {
     $stmt->execute([$pago['id_animal']]);
     $pago['vacunas'] = $stmt->fetchAll();
     
-    
-    $pago['subtotal_vacunas'] = $pago['monto'];
-    
-   
     $calculo_directo = 0;
     foreach ($pago['vacunas'] as $vacuna) {
         $calculo_directo += $vacuna['precio'];
     }
-    $pago['discrepancia'] = abs($calculo_directo - $pago['monto']) > 0.01;
+    
     $pago['calculo_directo'] = $calculo_directo;
+    $pago['monto_correcto'] = number_format($calculo_directo, 2);
+    $pago['discrepancia'] = abs($calculo_directo - $pago['monto']) > 0.01;
 }
-unset($pago); 
+unset($pago);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -75,34 +72,13 @@ unset($pago);
         .badge-pendiente { background-color: #ffc107; color: #212529; }
         .badge-pagado { background-color: #28a745; }
         .badge-cancelado { background-color: #dc3545; }
-        .vacunas-list {
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #dee2e6;
-            padding: 10px;
-            border-radius: 5px;
-            background-color: #f8f9fa;
-        }
-        .vacuna-item {
-            padding: 8px 0;
-            border-bottom: 1px solid #e9ecef;
-        }
-        .vacuna-item:last-child {
-            border-bottom: none;
-        }
-        .collapse-icon {
-            transition: transform 0.3s;
-        }
-        .collapsed .collapse-icon {
-            transform: rotate(-90deg);
-        }
-        .factura-btn {
-            min-width: 120px;
-        }
-        .discrepancia-warning {
-            background-color: #fff3cd;
-            border-left: 4px solid #ffc107;
-        }
+        .vacunas-list { max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; padding: 10px; border-radius: 5px; background-color: #f8f9fa; }
+        .vacuna-item { padding: 8px 0; border-bottom: 1px solid #e9ecef; }
+        .vacuna-item:last-child { border-bottom: none; }
+        .collapse-icon { transition: transform 0.3s; }
+        .collapsed .collapse-icon { transform: rotate(-90deg); }
+        .factura-btn { min-width: 120px; }
+        .discrepancia-warning { background-color: #fff3cd; border-left: 4px solid #ffc107; }
     </style>
 </head>
 <body>
@@ -169,11 +145,7 @@ unset($pago);
                                         <div class="collapse" id="vacunas<?= $p['id'] ?>">
                                             <div class="vacunas-list">
                                                 <?php if (count($p['vacunas']) > 0): ?>
-                                                    <?php 
-                                                    $total_calculado = 0;
-                                                    foreach ($p['vacunas'] as $vacuna): 
-                                                        $total_calculado += $vacuna['precio'];
-                                                    ?>
+                                                    <?php foreach ($p['vacunas'] as $vacuna): ?>
                                                     <div class="vacuna-item">
                                                         <div class="d-flex justify-content-between">
                                                             <div class="w-75">
@@ -181,15 +153,6 @@ unset($pago);
                                                                 <small class="text-muted">
                                                                     <?= htmlspecialchars(substr($vacuna['descripcion'], 0, 50)) ?>...
                                                                 </small>
-                                                                <?php if ($vacuna['fecha_aplicacion']): ?>
-                                                                <br>
-                                                                <small class="text-muted">
-                                                                    Aplicada: <?= date('d/m/Y', strtotime($vacuna['fecha_aplicacion'])) ?>
-                                                                    <?php if ($vacuna['fecha_proxima']): ?>
-                                                                    <br>Próxima: <?= date('d/m/Y', strtotime($vacuna['fecha_proxima'])) ?>
-                                                                    <?php endif; ?>
-                                                                </small>
-                                                                <?php endif; ?>
                                                             </div>
                                                             <div class="text-end">
                                                                 <span class="text-primary fw-bold"><?= number_format($vacuna['precio'], 2) ?> €</span>
@@ -200,14 +163,8 @@ unset($pago);
                                                     <div class="vacuna-item pt-2 mt-2 border-top">
                                                         <div class="d-flex justify-content-between fw-bold">
                                                             <span>Total calculado:</span>
-                                                            <span class="text-success"><?= number_format($total_calculado, 2) ?> €</span>
+                                                            <span class="text-success"><?= $p['monto_correcto'] ?> €</span>
                                                         </div>
-                                                        <?php if ($p['discrepancia']): ?>
-                                                        <div class="d-flex justify-content-between text-danger small">
-                                                            <span>Discrepancia detectada:</span>
-                                                            <span><?= number_format(abs($p['monto'] - $total_calculado), 2) ?> €</span>
-                                                        </div>
-                                                        <?php endif; ?>
                                                     </div>
                                                 <?php else: ?>
                                                     <div class="text-center text-muted py-3">
@@ -222,10 +179,14 @@ unset($pago);
                                         <div class="text-end">
                                             <span class="h5"><?= number_format($p['monto'], 2) ?> €</span><br>
                                             <small class="text-muted">
-                                                Suma de <?= count($p['vacunas']) ?> vacuna(s)<br>
                                                 <?php if ($p['discrepancia']): ?>
                                                 <span class="text-danger">
-                                                    <i class="fas fa-exclamation-triangle"></i> Verificar cálculo
+                                                    <i class="fas fa-exclamation-triangle"></i> Monto incorrecto<br>
+                                                    Debería ser: <?= $p['monto_correcto'] ?> €
+                                                </span>
+                                                <?php else: ?>
+                                                <span class="text-success">
+                                                    <i class="fas fa-check-circle"></i> Monto correcto
                                                 </span>
                                                 <?php endif; ?>
                                             </small>
@@ -252,26 +213,18 @@ unset($pago);
                                         </small>
                                     </td>
                                     <td>
-                                        <?php if ($p['pdf_dirr'] && file_exists('../' . $p['pdf_dirr'])): ?>
-                                            <a href="../<?= htmlspecialchars($p['pdf_dirr']) ?>" 
+                                        <?php if ($p['pdf_dirr']): ?>
+                                            <a href="<?= BASE_URL ?>/facturas/descargar.php?f=<?= urlencode($p['pdf_dirr']) ?>" 
                                                class="btn btn-sm btn-success factura-btn" 
-                                               target="_blank"
-                                               title="Ver factura #<?= htmlspecialchars($p['numero_factura']) ?>">
-                                                <i class="fas fa-file-pdf me-1"></i> Ver
+                                               title="Descargar factura #<?= htmlspecialchars($p['numero_factura']) ?>">
+                                                <i class="fas fa-download me-1"></i> Descargar
                                             </a>
                                             <small class="d-block text-muted mt-1">
                                                 <?= htmlspecialchars($p['numero_factura']) ?><br>
                                                 <?= date('d/m/Y', strtotime($p['fecha_emision'])) ?>
                                             </small>
                                         <?php else: ?>
-                                            <button class="btn btn-sm btn-secondary factura-btn" 
-                                                    title="Factura no disponible" 
-                                                    disabled>
-                                                <i class="fas fa-file-invoice me-1"></i> No existe
-                                            </button>
-                                            <small class="d-block text-muted mt-1">
-                                                Sin factura
-                                            </small>
+                                            <span class="text-muted">Sin factura</span>
                                         <?php endif; ?>
                                     </td>
                                 </tr>
@@ -293,7 +246,6 @@ unset($pago);
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-
 document.addEventListener('DOMContentLoaded', function() {
     const collapseButtons = document.querySelectorAll('[data-bs-toggle="collapse"]');
     
@@ -304,12 +256,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 icon.style.transition = 'transform 0.3s';
             }
         });
-    });
-    
-   
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 });
 </script>
