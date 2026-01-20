@@ -1,17 +1,9 @@
 <?php
 require_once '../includes/config.php';
-<<<<<<< HEAD
-/*Paginación*/
-$pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
-$por_pagina = 9;
-$inicio = ($pagina - 1) * $por_pagina;
-/*Suma de los animales disponibles por centro*/
-=======
 $pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
 $por_pagina = 9;
 $inicio = ($pagina - 1) * $por_pagina;
 
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 $stmt = $pdo->prepare("
     SELECT c.*, 
            COUNT(a.id_animal) as total_animales,
@@ -51,10 +43,6 @@ $total_paginas = ceil($total_centros / $por_pagina);
             </div>
         </div>
         <div class="row g-4">
-<<<<<<< HEAD
-        <!--Inserción datos de la consulta-->
-=======
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
             <?php foreach ($centros as $centro): ?>
                 <div class="col-md-6 col-lg-4">
                     <div class="card h-100 shadow-sm">

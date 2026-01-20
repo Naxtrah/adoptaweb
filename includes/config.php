@@ -12,11 +12,8 @@ session_set_cookie_params([
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-<<<<<<< HEAD
-=======
 
 define('MODO_DESARROLLO', true);
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
 $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https://" : "http://";
 $host = $_SERVER['HTTP_HOST'];
 $script_name = $_SERVER['SCRIPT_NAME'];
@@ -57,11 +54,7 @@ function sanitizar($input) {
     return trim(htmlspecialchars($input, ENT_QUOTES, 'UTF-8'));
 }
 
-<<<<<<< HEAD
-//Verificar cookie de consentimiento
-=======
-// Verificar cookie de consentimiento
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
+
 if (!isset($_SESSION['cookie_consent']) && !isset($_COOKIE['cookie_consent'])) {
     $_SESSION['show_cookie_banner'] = true;
 }

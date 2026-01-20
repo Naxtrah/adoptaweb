@@ -1,6 +1,6 @@
 <?php
 require_once 'includes/config.php';
-//Se realiza una query con pdo para obtener todos los centros
+
 $stmt = $pdo->query("
     SELECT c.*, 
            COUNT(a.id_animal) as total_animales,
@@ -19,7 +19,6 @@ $centros = $stmt->fetchAll();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa de Centros - AdoptaWeb</title>
     <?php include 'includes/header.php'; ?>
-    <!--Usamos leaflet una biblioteca de javascript para el mapa de nuestra web-->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
@@ -59,17 +58,12 @@ $centros = $stmt->fetchAll();
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
             cursor: pointer;
         }
-        a{
-            text-decoration: none;
-            color: #727573;
-        }
     </style>
 </head>
 <body>
     <?php include 'includes/navbar.php'; ?>
     <div class="container-fluid mt-4">
         <div class="row">
-            <!--Barralateral con lista de centros-->
             <div class="col-lg-4 col-xl-3">
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-success text-white">
@@ -81,19 +75,15 @@ $centros = $stmt->fetchAll();
                     <div class="card-body p-0">
                         <div class="list-group list-group-flush" id="lista-centros">
                             <?php if (count($centros) > 0): ?>
-                              
                                 <?php foreach ($centros as $centro): 
-                                   
                                     if ($centro['latitud'] && $centro['longitud']) {
                                         $lat = $centro['latitud'];
                                         $lng = $centro['longitud'];
                                     } else {
-                                       
                                         $lat = 40.4168 + (rand(-50, 50) / 1000);
                                         $lng = -3.7038 + (rand(-50, 50) / 1000);
                                     }
                                 ?>
-                               
                                 <div class="list-group-item centro-item" 
                                      data-id="<?= $centro['id_centro'] ?>"
                                      data-lat="<?= $lat ?>"
@@ -158,7 +148,6 @@ $centros = $stmt->fetchAll();
                     </div>
                 </div>
             </div>
-            <!-- Mapa -->
             <div class="col-lg-8 col-xl-9">
                 <div class="card shadow-sm">
                     <div class="card-header bg-light">
@@ -175,18 +164,14 @@ $centros = $stmt->fetchAll();
         </div>
     </div>
     <?php include 'includes/footer.php'; ?>
-    <!--Parte realizada con Deepseek-->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Inicializar mapa centrado en Madrid
         const mapa = L.map('mapa').setView([40.4168, -3.7038], 12);
         
-        // Añadir capa de OpenStreetMap
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(mapa);
         
-        // Icono personalizado
         const iconoCentro = L.divIcon({
             className: 'custom-div-icon',
             html: '<div class="centro-marker"><i class="fas fa-home"></i></div>',
@@ -195,10 +180,8 @@ $centros = $stmt->fetchAll();
             popupAnchor: [0, -40]
         });
         
-        // Almacenar marcadores
         const marcadores = {};
         
-        // Procesar cada centro
         document.querySelectorAll('.centro-item').forEach(item => {
             const id = item.dataset.id;
             const lat = parseFloat(item.dataset.lat);
@@ -210,7 +193,6 @@ $centros = $stmt->fetchAll();
             const disponibles = item.dataset.disponibles;
             const total = item.dataset.total;
             
-            // Crear marcador
             const marcador = L.marker([lat, lng], { icon: iconoCentro })
                 .addTo(mapa)
                 .bindPopup(`
@@ -233,11 +215,11 @@ $centros = $stmt->fetchAll();
                             <strong>${disponibles}</strong> disponibles de ${total} animales
                         </p>
                         <div class="d-grid gap-2">
-                            <a href="<?= BASE_URL ?>/centros?ver/${id}" 
+                            <a href="<?= BASE_URL ?>/centros/ver.php?id=${id}" 
                                class="btn btn-sm btn-success">
                                 Ver centro
                             </a>
-                            <a href="<?= BASE_URL ?>/animales?centro=${id}" 
+                            <a href="<?= BASE_URL ?>/animales/index.php?centro=${id}" 
                                class="btn btn-sm btn-outline-success">
                                 Ver animales
                             </a>
@@ -245,18 +227,11 @@ $centros = $stmt->fetchAll();
                     </div>
                 `);
             
-            // Almacenar referencia
             marcadores[id] = marcador;
             
-            // Evento al hacer clic en el elemento de la lista
             item.addEventListener('click', function() {
-                // Centrar mapa
                 mapa.setView([lat, lng], 15);
-                
-                // Abrir popup
                 marcador.openPopup();
-                
-                // Resaltar elemento
                 document.querySelectorAll('.centro-item').forEach(el => {
                     el.classList.remove('active');
                 });
@@ -264,13 +239,11 @@ $centros = $stmt->fetchAll();
             });
         });
         
-        // Ajustar mapa para mostrar todos los marcadores
         if (Object.keys(marcadores).length > 0) {
             const grupo = L.featureGroup(Object.values(marcadores));
             mapa.fitBounds(grupo.getBounds().pad(0.1));
         }
         
-        // Si no hay centros, mostrar mensaje
         if (Object.keys(marcadores).length === 0) {
             const control = L.control({position: 'topright'});
             control.onAdd = function() {
@@ -279,6 +252,18 @@ $centros = $stmt->fetchAll();
                 return div;
             };
             control.addTo(mapa);
+        }
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const centroId = urlParams.get('centro');
+        if (centroId && marcadores[centroId]) {
+            const marcador = marcadores[centroId];
+            mapa.setView(marcador.getLatLng(), 15);
+            marcador.openPopup();
+            const item = document.querySelector(`.centro-item[data-id="${centroId}"]`);
+            if (item) {
+                item.classList.add('active');
+            }
         }
     });
     </script>

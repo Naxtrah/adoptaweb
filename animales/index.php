@@ -44,9 +44,6 @@ require_once '../includes/config.php';
                             <div class="col-md-6">
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="buscador-animales" placeholder="Buscar por nombre, especie, raza...">
-                                    <button class="btn btn-success" id="btn-buscar">
-                                        <i class="fas fa-search"></i>
-                                    </button>
                                     <button class="btn btn-outline-secondary" id="btn-limpiar">
                                         <i class="fas fa-times"></i>
                                     </button>

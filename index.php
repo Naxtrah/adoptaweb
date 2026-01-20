@@ -70,10 +70,6 @@ require_once 'includes/config.php';
     <section class="container mb-5">
         <div class="row g-4">
             <?php
-<<<<<<< HEAD
-            /*Queries para recopilar datos de animalels, adopciones, centros y usuarios*/
-=======
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
             $stats = [
                 'animales' => $pdo->query("SELECT COUNT(*) FROM animales WHERE estado = 'Disponible'")->fetchColumn(),
                 'adopciones' => $pdo->query("SELECT COUNT(*) FROM adopciones WHERE estado = 'Aprobada'")->fetchColumn(),
@@ -119,15 +115,11 @@ require_once 'includes/config.php';
         </h2>
         <div class="row g-4">
             <?php
-<<<<<<< HEAD
-            /*Query para agregar los 4 animales más destacados*/
-=======
->>>>>>> 9eda46afd468fe512e1c54b728d4cf4768644f34
             $animales = $pdo->query("
                 SELECT a.*, c.nombre as centro_nombre 
                 FROM animales a 
                 LEFT JOIN centros c ON a.id_centro = c.id_centro 
-                WHERE a.estado = 'Disponible' 
+                WHERE a.estado IN ('Disponible')
                 ORDER BY a.fecha_ingreso DESC 
                 LIMIT 4
             ")->fetchAll();
