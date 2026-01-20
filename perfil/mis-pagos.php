@@ -8,7 +8,7 @@ if (!estaLogueado()) {
 
 $user = obtenerUsuario();
 
-// Obtener pagos del usuario
+
 $stmt = $pdo->prepare("
     SELECT p.*, f.numero_factura, c.nombre as centro_nombre
     FROM pagos p
@@ -69,14 +69,14 @@ $pagos = $stmt->fetchAll();
                                             <td>
                                                 <span class="badge bg-info"><?= $pago['metodo_pago'] ?></span>
                                             </td>
-                                           <td>
-                                        <?php if ($pago['numero_factura']): ?>
-                                            <a href="<?= BASE_URL ?>/facturas/descargar.php?f=<?= urlencode($pago['numero_factura'] . '.pdf') ?>"
-                                            class="btn btn-sm btn-outline-success">
-                                                <i class="fas fa-download"></i> Factura
-                                            </a>
-                                        <?php endif; ?>
-                                    </td>
+                                         <td>
+                                            <?php if ($pago['numero_factura']): ?>
+                                                <a href="<?= BASE_URL ?>/facturas/descargar.php?f=<?= urlencode($pago['numero_factura'] . '.pdf') ?>"
+                                                class="btn btn-sm btn-outline-success">
+                                                    <i class="fas fa-download"></i> Factura
+                                                </a>
+                                            <?php endif; ?>
+                                        </td>
 
                                         </tr>
                                         <?php endforeach; ?>
