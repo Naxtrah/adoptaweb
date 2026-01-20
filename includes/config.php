@@ -1,6 +1,17 @@
 <?php
-session_start();
-//Configuración de rutas
+
+session_set_cookie_params([
+    'lifetime' => 86400 * 30,
+    'path' => '/',
+    'domain' => $_SERVER['HTTP_HOST'],
+    'secure' => isset($_SERVER['HTTPS']),
+    'httponly' => true,
+    'samesite' => 'Lax'
+]);
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https://" : "http://";
 $host = $_SERVER['HTTP_HOST'];
 // Obtener la ruta base correctamente
@@ -30,13 +41,15 @@ define('JS_URL', BASE_URL . '/js/');
 define('ASSETS_URL', BASE_URL . '/assets/');
 //Require de conexión a database
 require_once ROOT_PATH . '/includes/conexion.php';
-//Distintas funciones para autenticar sanitizar texto...
+
 function estaLogueado() {
     return isset($_SESSION['user_id']);
 }
+
 function esAdmin() {
-    return isset($_SESSION['usuario_rol']) && $_SESSION['user_rol'] == 1;
+    return isset($_SESSION['user_role']) && (int)$_SESSION['user_role'] === 1;
 }
+
 function obtenerUsuario() {
     global $pdo;
     if (estaLogueado()) {
@@ -46,7 +59,13 @@ function obtenerUsuario() {
     }
     return null;
 }
-function sanitizar($input){
-    $input = trim(htmlspecialchars($input));
-    return $input;
+
+function sanitizar($input) {
+    return trim(htmlspecialchars($input, ENT_QUOTES, 'UTF-8'));
 }
+
+//Verificar cookie de consentimiento
+if (!isset($_SESSION['cookie_consent']) && !isset($_COOKIE['cookie_consent'])) {
+    $_SESSION['show_cookie_banner'] = true;
+}
+?>

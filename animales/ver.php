@@ -1,19 +1,22 @@
 <?php
 require_once '../includes/config.php';
 $id_animal = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+
 //Obtener información del animal
 $stmt = $pdo->prepare("
-    SELECT a.*, c.nombre as centro_nombre, c.direccion, c.telefono, c.email, c.web
+    SELECT a.*, c.nombre as centro_nombre, c.direccion, c.telefono, c.email, c.web, c.latitud, c.longitud
     FROM animales a
     LEFT JOIN centros c ON a.id_centro = c.id_centro
     WHERE a.id_animal = ?
 ");
 $stmt->execute([$id_animal]);
 $animal = $stmt->fetch();
+
 if (!$animal) {
     header('Location: ' . BASE_URL . '/animales');
     exit();
 }
+
 //Obtener vacunas del animal
 $vacunas = $pdo->prepare("
     SELECT v.*, av.fecha_aplicacion, av.fecha_proxima
@@ -22,6 +25,7 @@ $vacunas = $pdo->prepare("
     WHERE av.id_animal = ?
 ");
 $vacunas->execute([$id_animal]);
+
 //Verificar si el usuario actual ya tiene solicitud para este animal
 $tiene_solicitud = false;
 if (estaLogueado()) {
@@ -32,6 +36,19 @@ if (estaLogueado()) {
     ");
     $stmt->execute([$_SESSION['user_id'], $id_animal]);
     $tiene_solicitud = $stmt->fetchColumn() > 0;
+}
+
+//Corregir ruta de imagen
+$imagen_animal = '';
+if ($animal['imagen_url']) {
+    //Si la ruta comienza con ./img/, corregirla
+    if (strpos($animal['imagen_url'], './img/') === 0) {
+        $imagen_animal = '../' . substr($animal['imagen_url'], 2);
+    } else {
+        $imagen_animal = $animal['imagen_url'];
+    }
+} else {
+    $imagen_animal = '../img/animales/default.jpg';
 }
 ?>
 <!DOCTYPE html>
@@ -64,6 +81,10 @@ if (estaLogueado()) {
             padding-left: 15px;
             margin-bottom: 10px;
         }
+        a{
+            text-decoration: none;
+            color: #727573;
+        }
     </style>
 </head>
 <body>
@@ -77,14 +98,15 @@ if (estaLogueado()) {
                 <li class="breadcrumb-item active"><?= htmlspecialchars($animal['nombre']) ?></li>
             </ol>
         </nav>
-        <!--Header del animal -->
+        <!--Header del animal-->
         <div class="animal-header mb-5">
             <div class="row">
                 <div class="col-lg-6">
                     <div class="position-relative">
-                        <img src="<?= $animal['imagen_url'] ?: ASSETS_URL . 'img/animales/default.jpg' ?>" 
+                        <img src="<?= $imagen_animal ?>" 
                              class="animal-img w-100" 
-                             alt="<?= htmlspecialchars($animal['nombre']) ?>">
+                             alt="<?= htmlspecialchars($animal['nombre']) ?>"
+                             onerror="this.src='../img/animales/default.jpg'">
                         <span class="badge bg-<?= $animal['estado'] == 'Disponible' ? 'success' : 'warning' ?> position-absolute top-0 end-0 m-3 fs-6">
                             <?= $animal['estado'] ?>
                         </span>
@@ -115,7 +137,7 @@ if (estaLogueado()) {
                             Centro
                         </h5>
                         <p class="mb-1">
-                            <a href="<?= BASE_URL ?>/centros/ver/<?= $animal['id_centro'] ?>" 
+                            <a href="<?= BASE_URL ?>/centros/ver.php?id=<?= $animal['id_centro'] ?>" 
                                class="text-decoration-none">
                                 <?= htmlspecialchars($animal['centro_nombre']) ?>
                             </a>
@@ -125,7 +147,7 @@ if (estaLogueado()) {
                             <?= htmlspecialchars($animal['direccion']) ?>
                         </p>
                     </div>
-                    <!--Botones de acción -->
+                    <!--Botones de acción-->
                     <div class="d-grid gap-3">
                         <?php if ($animal['estado'] == 'Disponible'): ?>
                             <?php if (estaLogueado()): ?>
@@ -134,13 +156,12 @@ if (estaLogueado()) {
                                         <i class="fas fa-clock me-2"></i>Solicitud en proceso
                                     </button>
                                 <?php else: ?>
-                                    <a href="<?= BASE_URL ?>/animales/adoptar/<?= $animal['id_animal'] ?>" 
-                                       class="btn btn-success btn-lg">
+                                    <a href="<?= BASE_URL ?>/pagos/realizar.php?id_adopcion=<?= $id_adopcion ?>&tipo=adopcion" class="btn btn-success btn-lg">
                                         <i class="fas fa-heart me-2"></i>Solicitar adopción
                                     </a>
                                 <?php endif; ?>
                             <?php else: ?>
-                                <a href="<?= BASE_URL ?>/login?redirect=<?= urlencode($_SERVER['REQUEST_URI']) ?>" 
+                                <a href="<?= BASE_URL ?>/auth/login.php?redirect=<?= urlencode($_SERVER['REQUEST_URI']) ?>" 
                                    class="btn btn-success btn-lg">
                                     <i class="fas fa-sign-in-alt me-2"></i>Inicia sesión para adoptar
                                 </a>
@@ -150,7 +171,7 @@ if (estaLogueado()) {
                                 <i class="fas fa-ban me-2"></i>No disponible para adopción
                             </button>
                         <?php endif; ?>
-                        <a href="<?= BASE_URL ?>/centros/ver/<?= $animal['id_centro'] ?>" 
+                        <a href="<?= BASE_URL ?>/centros/ver.php?id=<?= $animal['id_centro'] ?>" 
                            class="btn btn-outline-success btn-lg">
                             <i class="fas fa-home me-2"></i>Contactar con el centro
                         </a>
@@ -158,9 +179,8 @@ if (estaLogueado()) {
                 </div>
             </div>
         </div>
-        <!--Información más detallada-->
         <div class="row">
-            <!-- Descripción -->
+            <!--Descripción-->
             <div class="col-lg-8">
                 <div class="card mb-4">
                     <div class="card-header bg-light">
@@ -170,7 +190,7 @@ if (estaLogueado()) {
                         </h5>
                     </div>
                     <div class="card-body">
-                        <p class="lead"><?= nl2br(htmlspecialchars($animal['descripcion'])) ?></p>
+                        <p class="lead"><?= nl2br(htmlspecialchars($animal['descripcion'] ?? 'Sin descripción disponible')) ?></p>
                         <div class="row mt-4">
                             <div class="col-md-6">
                                 <h6 class="mb-3">
@@ -233,7 +253,6 @@ if (estaLogueado()) {
                 </div>
                 <?php endif; ?>
             </div>
-            <!--Barra lateral-->
             <div class="col-lg-4">
                 <!--Información del centro-->
                 <div class="card mb-4">
@@ -258,7 +277,7 @@ if (estaLogueado()) {
                             <?= htmlspecialchars($animal['email']) ?>
                         </p>
                         <div class="d-grid gap-2">
-                            <a href="<?= BASE_URL ?>/centros/ver/<?= $animal['id_centro'] ?>" 
+                            <a href="<?= BASE_URL ?>/centros/ver.php?id=<?= $animal['id_centro'] ?>" 
                                class="btn btn-sm btn-success">
                                 Ver centro
                             </a>
@@ -266,6 +285,13 @@ if (estaLogueado()) {
                                class="btn btn-sm btn-outline-success">
                                 <i class="fas fa-phone me-1"></i>Llamar
                             </a>
+                            <?php if ($animal['latitud'] && $animal['longitud']): ?>
+                            <a href="https://maps.google.com/?q=<?= $animal['latitud'] ?>,<?= $animal['longitud'] ?>" 
+                               target="_blank" 
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-map me-1"></i>Ver en Google Maps
+                            </a>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -292,31 +318,6 @@ if (estaLogueado()) {
                         </p>
                     </div>
                 </div>
-                <!--Compartir-->
-                <div class="card">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0">
-                            <i class="fas fa-share-alt me-2"></i>
-                            Compartir
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex justify-content-center gap-2">
-                            <button class="btn btn-outline-primary btn-sm">
-                                <i class="fab fa-facebook-f"></i>
-                            </button>
-                            <button class="btn btn-outline-info btn-sm">
-                                <i class="fab fa-twitter"></i>
-                            </button>
-                            <button class="btn btn-outline-danger btn-sm">
-                                <i class="fab fa-instagram"></i>
-                            </button>
-                            <button class="btn btn-outline-success btn-sm">
-                                <i class="fab fa-whatsapp"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
         <!--Animales relacionados-->
@@ -340,13 +341,26 @@ if (estaLogueado()) {
                 Otros animales del mismo centro
             </h4>
             <div class="row g-4">
-                <?php while ($relacionado = $relacionados->fetch()): ?>
+                <?php while ($relacionado = $relacionados->fetch()): 
+                    // Corregir ruta de imagen para relacionados
+                    $imagen_relacionado = '';
+                    if ($relacionado['imagen_url']) {
+                        if (strpos($relacionado['imagen_url'], './img/') === 0) {
+                            $imagen_relacionado = '../' . substr($relacionado['imagen_url'], 2);
+                        } else {
+                            $imagen_relacionado = $relacionado['imagen_url'];
+                        }
+                    } else {
+                        $imagen_relacionado = '../img/animales/default.jpg';
+                    }
+                ?>
                 <div class="col-md-4">
                     <div class="card h-100">
-                        <img src="<?= $relacionado['imagen_url'] ?: ASSETS_URL . './img/animales/default.jpg' ?>" 
+                        <img src="<?= $imagen_relacionado ?>" 
                              class="card-img-top" 
                              alt="<?= htmlspecialchars($relacionado['nombre']) ?>"
-                             style="height: 200px; object-fit: cover;">
+                             style="height: 200px; object-fit: cover;"
+                             onerror="this.src='../img/animales/default.jpg'">
                         <div class="card-body">
                             <h5 class="card-title"><?= htmlspecialchars($relacionado['nombre']) ?></h5>
                             <p class="card-text small text-muted">
@@ -354,7 +368,7 @@ if (estaLogueado()) {
                             </p>
                         </div>
                         <div class="card-footer bg-white">
-                            <a href="<?= BASE_URL ?>/animales/ver/<?= $relacionado['id_animal'] ?>" 
+                            <a href="ver.php?id=<?= $relacionado['id_animal'] ?>" 
                                class="btn btn-sm btn-success w-100">
                                 Ver ficha
                             </a>

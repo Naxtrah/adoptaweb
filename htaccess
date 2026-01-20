@@ -1,0 +1,18 @@
+RewriteEngine On
+RewriteBase /adoptaweb/
+
+#Redirigir sin .php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([^\.]+)$ $1.php [NC,L]
+
+#Redirigir a index.php si no existe
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+
+#Proteger archivos sensibles
+<FilesMatch "\.(sql|log|ini)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>

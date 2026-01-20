@@ -22,7 +22,6 @@ $centros = $stmt->fetchAll();
     <!--Usamos leaflet una biblioteca de javascript para el mapa de nuestra web-->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
     <style>
         #mapa {
             height: 600px;
@@ -60,6 +59,10 @@ $centros = $stmt->fetchAll();
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
             cursor: pointer;
         }
+        a{
+            text-decoration: none;
+            color: #727573;
+        }
     </style>
 </head>
 <body>
@@ -78,11 +81,19 @@ $centros = $stmt->fetchAll();
                     <div class="card-body p-0">
                         <div class="list-group list-group-flush" id="lista-centros">
                             <?php if (count($centros) > 0): ?>
+                              
                                 <?php foreach ($centros as $centro): 
-                                    //Coordenadas ficticias de la ubicación de nuestro local
-                                    $lat = 40.4168 + (rand(-50, 50) / 1000);
-                                    $lng = -3.7038 + (rand(-50, 50) / 1000);
+                                   
+                                    if ($centro['latitud'] && $centro['longitud']) {
+                                        $lat = $centro['latitud'];
+                                        $lng = $centro['longitud'];
+                                    } else {
+                                       
+                                        $lat = 40.4168 + (rand(-50, 50) / 1000);
+                                        $lng = -3.7038 + (rand(-50, 50) / 1000);
+                                    }
                                 ?>
+                               
                                 <div class="list-group-item centro-item" 
                                      data-id="<?= $centro['id_centro'] ?>"
                                      data-lat="<?= $lat ?>"
@@ -222,7 +233,7 @@ $centros = $stmt->fetchAll();
                             <strong>${disponibles}</strong> disponibles de ${total} animales
                         </p>
                         <div class="d-grid gap-2">
-                            <a href="<?= BASE_URL ?>/centros/ver/${id}" 
+                            <a href="<?= BASE_URL ?>/centros?ver/${id}" 
                                class="btn btn-sm btn-success">
                                 Ver centro
                             </a>
