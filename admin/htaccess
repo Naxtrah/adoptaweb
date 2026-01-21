@@ -1,0 +1,14 @@
+#Permitir acceso a archivos .php
+<FilesMatch "\.php$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+#Denegar acceso al resto de archivos (imágenes, txt, sql, etc.)
+<FilesMatch "\.(sql|log|ini|txt|json|md|yml|yaml|env|gitignore)$">
+    Order deny,allow
+    Deny from all
+</FilesMatch>
+
+#Denegar listado de carpetas
+Options -Indexes

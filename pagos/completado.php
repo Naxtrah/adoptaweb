@@ -1,0 +1,219 @@
+<?php
+require_once '../includes/config.php';
+
+//Verificar que el usuario esté logueado
+if (!estaLogueado()) redirect(BASE_URL.'/auth/login.php');
+
+//Obtener parámetros de la URL
+$token = $_GET['token'] ?? '';
+$id_pago = $_GET['id_pago'] ?? 0;
+
+if (!$token || !$id_pago) {
+    $_SESSION['error'] = "Datos de pago incompletos";
+    header('Location: ' . BASE_URL . '/perfil/pagos-pendientes.php');
+    exit();
+}
+
+//Consulta detallada del pago completado
+$stmt = $pdo->prepare("
+    SELECT 
+        ap.*,
+        p.id_pago,
+        p.monto as pago_monto,
+        p.concepto as pago_concepto,
+        p.fecha_pago as fecha_pago_real,
+        p.metodo_pago,
+        f.numero_factura,
+        f.fecha_emision,
+        f.pdf_dirr,
+        an.nombre AS animal_nombre,
+        a.id_adopcion
+    FROM adopciones_pagos ap
+    JOIN adopciones a ON ap.id_adopcion = a.id_adopcion      -- Unir información de adopción
+    JOIN animales an ON a.id_animal = an.id_animal          -- Unir información del animal
+    JOIN pagos p ON p.id_pago = ?                           -- Unir información del pago
+    LEFT JOIN facturas f ON f.id_pago = p.id_pago           -- Unir factura (si existe)
+    WHERE ap.token_pago = ?                                 -- Filtrar por token único
+        AND ap.estado = 'Pagado'                            -- Solo pagos completados
+        AND ap.id_usuario = ?                               -- Solo pagos del usuario actual
+");
+$stmt->execute([$id_pago, $token, $_SESSION['user_id']]);
+$pago = $stmt->fetch();
+
+//Verificar que el pago existe
+if (!$pago) {
+    $_SESSION['error'] = "Pago no encontrado o no autorizado";
+    header('Location: ' . BASE_URL . '/perfil/pagos-pendientes.php');
+    exit();
+}
+
+//Consultar las vacunas asociadas
+$vacunas = $pdo->prepare("
+    SELECT v.nombre, v.precio 
+    FROM animal_vacunas av 
+    JOIN vacunas v ON av.id_vacuna = v.id_vacuna 
+    WHERE av.id_animal = ?
+");
+$vacunas->execute([$pago['id_animal']]);
+$vacunas_lista = $vacunas->fetchAll();
+
+//Calcular el total del monto de las vacunas
+$total_vacunas = array_sum(array_column($vacunas_lista, 'precio'));
+$monto_pagado = $pago['pago_monto'] ?? $pago['monto'];
+
+//Si no hay factura generada, crear una nueva
+if (!$pago['numero_factura']) {
+    $concepto = 'Vacunas de ' . $pago['animal_nombre'];
+    $numero_factura = 'FAC-' . date('Y') . '-' . str_pad($id_pago, 5, '0', STR_PAD_LEFT);
+    
+    //Crear directorio de facturas si no existe
+    $pdfDir = __DIR__ . '/../facturas';
+    if (!is_dir($pdfDir)) mkdir($pdfDir, 0755, true);
+    $pdfFile = $pdfDir . '/' . $numero_factura . '.pdf';
+
+    //Generar PDF de la factura
+    require_once __DIR__ . '/../includes/pdf.php';
+    $datos = [
+        'numero' => $numero_factura,
+        'fecha' => date('d/m/Y'),
+        'cliente' => $_SESSION['user_name'] ?? 'Usuario',
+        'concepto' => $concepto,
+        'monto' => number_format($monto_pagado, 2),
+        'vacunas' => $vacunas_lista
+    ];
+    
+    generarPDFFactura($datos, $pdfFile);
+
+    //Insertar registro de la factura en la base de datos
+    $stmt = $pdo->prepare("INSERT INTO facturas (id_pago, numero_factura, fecha_emision, pdf_dirr) VALUES (?, ?, NOW(), ?)");
+    $stmt->execute([$id_pago, $numero_factura, $numero_factura . '.pdf']);
+    
+    //Actualizar datos del pago en memoria
+    $pago['numero_factura'] = $numero_factura;
+    $pago['pdf_dirr'] = $numero_factura . '.pdf';
+    $pago['fecha_emision'] = date('Y-m-d H:i:s');
+}
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Pago Completado - AdoptaWeb</title>
+    <?php include '../includes/header.php'; ?>
+</head>
+<body>
+<?php include '../includes/navbar.php'; ?>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-check-circle me-2"></i>¡Pago Completado con Éxito!</h4>
+                </div>
+                
+                <div class="card-body">
+                    <div class="text-center mb-5">
+                        <div class="rounded-circle bg-success d-inline-flex align-items-center justify-content-center mb-3"
+                             style="width: 100px; height: 100px;">
+                            <i class="fas fa-check fa-3x text-white"></i>
+                        </div>
+                        <h3 class="text-success">¡Gracias por tu adopción!</h3>
+                        <p class="lead">Tu pago ha sido procesado correctamente y la adopción está ahora completa.</p>
+                    </div>
+
+                    <div class="row">
+                        <!--Resumen de la adopción-->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="fas fa-paw me-2"></i>Resumen de la adopción</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Animal adoptado:</strong> <?= htmlspecialchars($pago['animal_nombre']) ?></p>
+                                    <p><strong>Fecha de pago:</strong> <?= date('d/m/Y H:i', strtotime($pago['fecha_pago_real'] ?? $pago['fecha_pago'])) ?></p>
+                                    <p><strong>Número de adopción:</strong> ADOP-<?= str_pad($pago['id_adopcion'], 4, '0', STR_PAD_LEFT) ?></p>
+                                    <p><strong>Método de pago:</strong> <?= htmlspecialchars($pago['metodo_pago']) ?></p>
+                                    <hr>
+                                    <!--Lista de vacunas incluidas-->
+                                    <h6>Vacunas incluidas:</h6>
+                                    <ul class="list-unstyled">
+                                        <?php foreach ($vacunas_lista as $v): ?>
+                                            <li>• <?= htmlspecialchars($v['nombre']) ?> - <?= number_format($v['precio'], 2) ?> €</li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                    <!--Total pagado destacado-->
+                                    <p class="fw-bold mt-3">Total pagado: <span class="text-success"><?= number_format($monto_pagado, 2) ?> €</span></p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!--Documentación y factura-->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Documentación</h5>
+                                </div>
+                                <div class="card-body">
+                                    <?php if ($pago['numero_factura']): ?>
+                                        <p><strong>Factura:</strong> <?= htmlspecialchars($pago['numero_factura']) ?></p>
+                                        <p><strong>Fecha de emisión:</strong> <?= date('d/m/Y', strtotime($pago['fecha_emision'])) ?></p>
+                                        
+                                        <!--Mensaje informativo sobre la factura-->
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            Tu factura ha sido generada y está disponible para descarga.
+                                        </div>
+                                        
+                                        <!--Botón para descargar factura PDF-->
+                                        <div class="d-grid gap-2">
+                                            <?php if ($pago['pdf_dirr']): ?>
+                                                <a href="<?= BASE_URL ?>/facturas/descargar.php?f=<?= urlencode($pago['pdf_dirr']) ?>" 
+                                                   class="btn btn-primary">
+                                                    <i class="fas fa-download me-2"></i>Descargar factura PDF
+                                                </a>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <!--Mensaje si la factura aún se está generando-->
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            La factura se está generando. Por favor, inténtalo de nuevo en unos minutos.
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-success mt-4">
+                        <h5><i class="fas fa-star me-2"></i>¡Felicidades!</h5>
+                        <p class="mb-0">Ahora eres el orgulloso dueño de <?= htmlspecialchars($pago['animal_nombre']) ?>. 
+                        Recibirás un correo con todos los detalles de la adopción y los próximos pasos.</p>
+                    </div>
+
+                    <!--Botones de navegación después del pago-->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
+                        <a href="<?= BASE_URL ?>/perfil/mis-adopciones.php" class="btn btn-success btn-lg me-md-2">
+                            <i class="fas fa-heart me-2"></i>Ver mis adopciones
+                        </a>
+                        <a href="<?= BASE_URL ?>/perfil/" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-user me-2"></i>Ir a mi perfil
+                        </a>
+                        <a href="<?= BASE_URL ?>/animales/" class="btn btn-outline-success btn-lg ms-md-2">
+                            <i class="fas fa-paw me-2"></i>Ver más animales
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-footer text-muted text-center">
+                    ¿Necesitas ayuda? <a href="<?= BASE_URL ?>/contacto.php">Contacta con nosotros</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php include '../includes/footer.php'; ?>
+</body>
+</html>
